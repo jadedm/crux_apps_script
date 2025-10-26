@@ -14,6 +14,8 @@ function runUnitTests() {
   testFetchData();
   testNormalizeData();
   testAddToSpreadsheet();
+  testGetExecutionHistorySheet();
+  testLogExecutionHistory();
   testRun();
 
   TestMocks.cleanupGlobalMocks();
@@ -189,20 +191,23 @@ function testIsValidUrl() {
  */
 function testBuildRequestUrls() {
   TestFramework.describe("buildRequestUrls", () => {
-    TestFramework.it("should build requests for valid URLs and form factors", async () => {
-      const extractor = new CruxExtractor({
-        urls: ["https://example.com", "https://test.com"],
-        spreadsheetId: "test-sheet-id",
-        apiKey: "test-api-key",
-        formFactor: ["PHONE", "DESKTOP"],
-      });
+    TestFramework.it(
+      "should build requests for valid URLs and form factors",
+      async () => {
+        const extractor = new CruxExtractor({
+          urls: ["https://example.com", "https://test.com"],
+          spreadsheetId: "test-sheet-id",
+          apiKey: "test-api-key",
+          formFactor: ["PHONE", "DESKTOP"],
+        });
 
-      const requests = await extractor.buildRequestUrls();
+        const requests = await extractor.buildRequestUrls();
 
-      TestFramework.expect(requests.length).toBe(4); // 2 URLs × 2 form factors
-      TestFramework.expect(requests[0].method).toBe("post");
-      TestFramework.expect(requests[0].contentType).toBe("application/json");
-    });
+        TestFramework.expect(requests.length).toBe(4); // 2 URLs × 2 form factors
+        TestFramework.expect(requests[0].method).toBe("post");
+        TestFramework.expect(requests[0].contentType).toBe("application/json");
+      }
+    );
 
     TestFramework.it("should skip invalid URLs", async () => {
       const extractor = new CruxExtractor({
@@ -230,22 +235,25 @@ function testBuildRequestUrls() {
       TestFramework.expect(requests.length).toBe(1); // Only valid form factor
     });
 
-    TestFramework.it("should throw if no valid combinations exist", async () => {
-      const extractor = new CruxExtractor({
-        urls: ["invalid-url"],
-        spreadsheetId: "test-sheet-id",
-        apiKey: "test-api-key",
-      });
+    TestFramework.it(
+      "should throw if no valid combinations exist",
+      async () => {
+        const extractor = new CruxExtractor({
+          urls: ["invalid-url"],
+          spreadsheetId: "test-sheet-id",
+          apiKey: "test-api-key",
+        });
 
-      try {
-        await extractor.buildRequestUrls();
-        TestFramework.expect(true).toBe(false); // Should not reach here
-      } catch (error) {
-        TestFramework.expect(error.message).toContain(
-          "No valid URL/form factor combinations"
-        );
+        try {
+          await extractor.buildRequestUrls();
+          TestFramework.expect(true).toBe(false); // Should not reach here
+        } catch (error) {
+          TestFramework.expect(error.message).toContain(
+            "No valid URL/form factor combinations"
+          );
+        }
       }
-    });
+    );
 
     TestFramework.it("should create proper payload structure", async () => {
       const extractor = new CruxExtractor({
@@ -293,7 +301,10 @@ function testFetchData() {
 
     TestFramework.it("should skip non-200 responses", async () => {
       const responses = [
-        TestMocks.createMockResponse(200, TestMocks.createDefaultResponse().getContentText()),
+        TestMocks.createMockResponse(
+          200,
+          TestMocks.createDefaultResponse().getContentText()
+        ),
         TestMocks.createMockResponse(404, "Not Found"),
       ];
 
@@ -313,9 +324,7 @@ function testFetchData() {
     });
 
     TestFramework.it("should handle JSON parse errors gracefully", async () => {
-      const responses = [
-        TestMocks.createMockResponse(200, "invalid-json{"),
-      ];
+      const responses = [TestMocks.createMockResponse(200, "invalid-json{")];
 
       TestMocks.setupGlobalMocks({ urlFetchResponses: responses });
 
@@ -332,22 +341,25 @@ function testFetchData() {
       TestFramework.expect(data.length).toBe(0); // Parse error skipped
     });
 
-    TestFramework.it("should throw if buildRequestUrls not called first", async () => {
-      const extractor = new CruxExtractor({
-        urls: ["https://example.com"],
-        spreadsheetId: "test-sheet-id",
-        apiKey: "test-api-key",
-      });
+    TestFramework.it(
+      "should throw if buildRequestUrls not called first",
+      async () => {
+        const extractor = new CruxExtractor({
+          urls: ["https://example.com"],
+          spreadsheetId: "test-sheet-id",
+          apiKey: "test-api-key",
+        });
 
-      try {
-        await extractor.fetchData();
-        TestFramework.expect(true).toBe(false); // Should not reach here
-      } catch (error) {
-        TestFramework.expect(error.message).toContain(
-          "Call buildRequestUrls() first"
-        );
+        try {
+          await extractor.fetchData();
+          TestFramework.expect(true).toBe(false); // Should not reach here
+        } catch (error) {
+          TestFramework.expect(error.message).toContain(
+            "Call buildRequestUrls() first"
+          );
+        }
       }
-    });
+    );
   });
 }
 
@@ -431,26 +443,27 @@ function testNormalizeData() {
       }
     });
 
-    TestFramework.it("should throw if all responses fail normalization", async () => {
-      const extractor = new CruxExtractor({
-        urls: ["https://example.com"],
-        spreadsheetId: "test-sheet-id",
-        apiKey: "test-api-key",
-      });
+    TestFramework.it(
+      "should throw if all responses fail normalization",
+      async () => {
+        const extractor = new CruxExtractor({
+          urls: ["https://example.com"],
+          spreadsheetId: "test-sheet-id",
+          apiKey: "test-api-key",
+        });
 
-      extractor.filteredResponse = [
-        { invalid: "structure" },
-      ];
+        extractor.filteredResponse = [{ invalid: "structure" }];
 
-      try {
-        await extractor.normalizeData();
-        TestFramework.expect(true).toBe(false); // Should not reach here
-      } catch (error) {
-        TestFramework.expect(error.message).toContain(
-          "All responses failed normalization"
-        );
+        try {
+          await extractor.normalizeData();
+          TestFramework.expect(true).toBe(false); // Should not reach here
+        } catch (error) {
+          TestFramework.expect(error.message).toContain(
+            "All responses failed normalization"
+          );
+        }
       }
-    });
+    );
   });
 }
 
@@ -468,9 +481,7 @@ function testAddToSpreadsheet() {
         apiKey: "test-api-key",
       });
 
-      extractor.normalizedResponse = [
-        Array(19).fill("test-data"),
-      ];
+      extractor.normalizedResponse = [Array(19).fill("test-data")];
 
       await extractor.addToSpreadsheet();
 
@@ -487,31 +498,32 @@ function testAddToSpreadsheet() {
         apiKey: "test-api-key",
       });
 
-      extractor.normalizedResponse = [
-        Array(19).fill("test-data"),
-      ];
+      extractor.normalizedResponse = [Array(19).fill("test-data")];
 
       await extractor.addToSpreadsheet();
 
       TestFramework.expect(true).toBeTruthy();
     });
 
-    TestFramework.it("should throw if no normalizedResponse exists", async () => {
-      const extractor = new CruxExtractor({
-        urls: ["https://example.com"],
-        spreadsheetId: "test-sheet-id",
-        apiKey: "test-api-key",
-      });
+    TestFramework.it(
+      "should throw if no normalizedResponse exists",
+      async () => {
+        const extractor = new CruxExtractor({
+          urls: ["https://example.com"],
+          spreadsheetId: "test-sheet-id",
+          apiKey: "test-api-key",
+        });
 
-      try {
-        await extractor.addToSpreadsheet();
-        TestFramework.expect(true).toBe(false); // Should not reach here
-      } catch (error) {
-        TestFramework.expect(error.message).toContain(
-          "Call normalizeData() first"
-        );
+        try {
+          await extractor.addToSpreadsheet();
+          TestFramework.expect(true).toBe(false); // Should not reach here
+        } catch (error) {
+          TestFramework.expect(error.message).toContain(
+            "Call normalizeData() first"
+          );
+        }
       }
-    });
+    );
   });
 }
 
@@ -520,27 +532,31 @@ function testAddToSpreadsheet() {
  */
 function testRun() {
   TestFramework.describe("run", () => {
-    TestFramework.it("should execute complete pipeline successfully", async () => {
-      const responses = [
-        TestMocks.createDefaultResponse(),
-      ];
+    TestFramework.it(
+      "should execute complete pipeline successfully",
+      async () => {
+        const responses = [TestMocks.createDefaultResponse()];
 
-      TestMocks.setupGlobalMocks({ urlFetchResponses: responses, sheetExists: false });
+        TestMocks.setupGlobalMocks({
+          urlFetchResponses: responses,
+          sheetExists: false,
+        });
 
-      const extractor = new CruxExtractor({
-        urls: ["https://example.com"],
-        spreadsheetId: "test-sheet-id",
-        apiKey: "test-api-key",
-        formFactor: ["PHONE"],
-      });
+        const extractor = new CruxExtractor({
+          urls: ["https://example.com"],
+          spreadsheetId: "test-sheet-id",
+          apiKey: "test-api-key",
+          formFactor: ["PHONE"],
+        });
 
-      const summary = await extractor.run();
+        const summary = await extractor.run();
 
-      TestFramework.expect(summary.totalRequests).toBe(1);
-      TestFramework.expect(summary.successfulResponses).toBe(1);
-      TestFramework.expect(summary.rowsWritten).toBe(1);
-      TestFramework.expect(summary.failedRequests).toBe(0);
-    });
+        TestFramework.expect(summary.totalRequests).toBe(1);
+        TestFramework.expect(summary.successfulResponses).toBe(1);
+        TestFramework.expect(summary.rowsWritten).toBe(1);
+        TestFramework.expect(summary.failedRequests).toBe(0);
+      }
+    );
 
     TestFramework.it("should return correct failure count", async () => {
       const responses = [
@@ -548,7 +564,10 @@ function testRun() {
         TestMocks.createMockResponse(404, "Not Found"),
       ];
 
-      TestMocks.setupGlobalMocks({ urlFetchResponses: responses, sheetExists: false });
+      TestMocks.setupGlobalMocks({
+        urlFetchResponses: responses,
+        sheetExists: false,
+      });
 
       const extractor = new CruxExtractor({
         urls: ["https://example.com"],
@@ -560,6 +579,222 @@ function testRun() {
       const summary = await extractor.run();
 
       TestFramework.expect(summary.failedRequests).toBe(1);
+    });
+
+    TestFramework.it("should include executionId in summary", async () => {
+      const responses = [TestMocks.createDefaultResponse()];
+
+      TestMocks.setupGlobalMocks({
+        urlFetchResponses: responses,
+        sheetExists: false,
+      });
+
+      const extractor = new CruxExtractor({
+        urls: ["https://example.com"],
+        spreadsheetId: "test-sheet-id",
+        apiKey: "test-api-key",
+        formFactor: ["PHONE"],
+      });
+
+      const summary = await extractor.run();
+
+      TestFramework.expect(summary.executionId).toBeTruthy();
+      TestFramework.expect(summary.executionId).toContain("exec_");
+    });
+  });
+}
+
+/**
+ * Test getExecutionHistorySheet method
+ */
+function testGetExecutionHistorySheet() {
+  TestFramework.describe("getExecutionHistorySheet", () => {
+    TestFramework.it("should create history sheet if it doesn't exist", () => {
+      TestMocks.setupGlobalMocks({ sheetExists: false });
+
+      const extractor = new CruxExtractor({
+        urls: ["https://example.com"],
+        spreadsheetId: "test-sheet-id",
+        apiKey: "test-api-key",
+      });
+
+      const historySheet = extractor.getExecutionHistorySheet();
+
+      TestFramework.expect(historySheet).toBeTruthy();
+      TestFramework.expect(historySheet.getName()).toBe("executionHistory");
+    });
+
+    TestFramework.it(
+      "should return existing history sheet if it exists",
+      () => {
+        TestMocks.setupGlobalMocks({ sheetExists: true });
+
+        const extractor = new CruxExtractor({
+          urls: ["https://example.com"],
+          spreadsheetId: "test-sheet-id",
+          apiKey: "test-api-key",
+        });
+
+        const historySheet = extractor.getExecutionHistorySheet();
+
+        TestFramework.expect(historySheet).toBeTruthy();
+        TestFramework.expect(historySheet.getName()).toBe("cruxData");
+      }
+    );
+
+    TestFramework.it(
+      "should set correct headers when creating new sheet",
+      () => {
+        TestMocks.setupGlobalMocks({ sheetExists: false });
+
+        const extractor = new CruxExtractor({
+          urls: ["https://example.com"],
+          spreadsheetId: "test-sheet-id",
+          apiKey: "test-api-key",
+        });
+
+        const historySheet = extractor.getExecutionHistorySheet();
+        const headers = historySheet.getRange(1, 1, 1, 8).getValues()[0];
+
+        TestFramework.expect(headers[0]).toBe("Execution ID");
+        TestFramework.expect(headers[1]).toBe("Timestamp");
+        TestFramework.expect(headers[2]).toBe("URL");
+        TestFramework.expect(headers[3]).toBe("Form Factor");
+        TestFramework.expect(headers[4]).toBe("Status");
+        TestFramework.expect(headers[5]).toBe("Response Code");
+        TestFramework.expect(headers[6]).toBe("Error Message");
+        TestFramework.expect(headers[7]).toBe("Normalized");
+      }
+    );
+  });
+}
+
+/**
+ * Test logExecutionHistory method
+ */
+function testLogExecutionHistory() {
+  TestFramework.describe("logExecutionHistory", () => {
+    TestFramework.it("should log execution records successfully", () => {
+      TestMocks.setupGlobalMocks({ sheetExists: false });
+
+      const extractor = new CruxExtractor({
+        urls: ["https://example.com"],
+        spreadsheetId: "test-sheet-id",
+        apiKey: "test-api-key",
+      });
+
+      const records = [
+        {
+          url: "https://example.com",
+          formFactor: "PHONE",
+          status: "SUCCESS",
+          responseCode: 200,
+          errorMessage: "-",
+          normalized: "YES",
+        },
+        {
+          url: "https://example.com",
+          formFactor: "DESKTOP",
+          status: "FAILED",
+          responseCode: 404,
+          errorMessage: "Not Found",
+          normalized: "NO",
+        },
+      ];
+
+      extractor.logExecutionHistory("exec_123456_789", records);
+
+      const historySheet = extractor.getExecutionHistorySheet();
+      const lastRow = historySheet.getLastRow();
+
+      TestFramework.expect(lastRow).toBe(3); // Header + 2 records
+    });
+
+    TestFramework.it("should handle empty records array", () => {
+      TestMocks.setupGlobalMocks({ sheetExists: false });
+
+      const extractor = new CruxExtractor({
+        urls: ["https://example.com"],
+        spreadsheetId: "test-sheet-id",
+        apiKey: "test-api-key",
+      });
+
+      extractor.logExecutionHistory("exec_123456_789", []);
+
+      const historySheet = extractor.getExecutionHistorySheet();
+      const lastRow = historySheet.getLastRow();
+
+      TestFramework.expect(lastRow).toBe(1); // Only header
+    });
+
+    TestFramework.it("should handle records with missing fields", () => {
+      TestMocks.setupGlobalMocks({ sheetExists: false });
+
+      const extractor = new CruxExtractor({
+        urls: ["https://example.com"],
+        spreadsheetId: "test-sheet-id",
+        apiKey: "test-api-key",
+      });
+
+      const records = [
+        {
+          url: "https://example.com",
+          formFactor: "PHONE",
+          status: "SUCCESS",
+        },
+      ];
+
+      extractor.logExecutionHistory("exec_123456_789", records);
+
+      const historySheet = extractor.getExecutionHistorySheet();
+      const data = historySheet.getRange(2, 1, 1, 8).getValues()[0];
+
+      TestFramework.expect(data[0]).toBe("exec_123456_789"); // Execution ID
+      TestFramework.expect(data[2]).toBe("https://example.com"); // URL
+      TestFramework.expect(data[5]).toBe("-"); // Response code should default to "-"
+      TestFramework.expect(data[6]).toBe("-"); // Error message should default to "-"
+      TestFramework.expect(data[7]).toBe("NO"); // Normalized should default to "NO"
+    });
+
+    TestFramework.it("should append to existing history records", () => {
+      TestMocks.setupGlobalMocks({ sheetExists: true });
+
+      const extractor = new CruxExtractor({
+        urls: ["https://example.com"],
+        spreadsheetId: "test-sheet-id",
+        apiKey: "test-api-key",
+      });
+
+      const records1 = [
+        {
+          url: "https://example1.com",
+          formFactor: "PHONE",
+          status: "SUCCESS",
+          responseCode: 200,
+          errorMessage: "-",
+          normalized: "YES",
+        },
+      ];
+
+      extractor.logExecutionHistory("exec_111111_111", records1);
+
+      const records2 = [
+        {
+          url: "https://example2.com",
+          formFactor: "DESKTOP",
+          status: "SUCCESS",
+          responseCode: 200,
+          errorMessage: "-",
+          normalized: "YES",
+        },
+      ];
+
+      extractor.logExecutionHistory("exec_222222_222", records2);
+
+      const historySheet = extractor.getExecutionHistorySheet();
+      const lastRow = historySheet.getLastRow();
+
+      TestFramework.expect(lastRow).toBe(3); // Header + 2 records
     });
   });
 }

@@ -71,6 +71,8 @@ The global `executionFlag` prevents duplicate execution within the same run, wor
 
 ## Output Schema
 
+### Main Data Sheet (cruxData)
+
 19 columns per row:
 
 ```
@@ -82,6 +84,51 @@ FCP (Good) | FCP (Needs Improvement) | FCP (Poor) | FCP (75th Percentile)
 ```
 
 Missing metrics are denoted with "-".
+
+### Execution History Sheet (executionHistory)
+
+The script automatically creates and maintains an **Execution History** sheet that tracks every API request made, including failed requests. This is invaluable for debugging and monitoring.
+
+8 columns per row:
+
+```
+Execution ID | Timestamp | URL | Form Factor | Status | Response Code | Error Message | Normalized
+```
+
+**Column Descriptions:**
+
+- **Execution ID**: Unique identifier for each script run (format: `exec_{timestamp}_{random}`)
+- **Timestamp**: Date and time of the request (dd-MM-yyyy HH:mm:ss)
+- **URL**: The URL that was requested
+- **Form Factor**: PHONE, DESKTOP, or ALL_FORM_FACTORS
+- **Status**: SUCCESS or FAILED
+- **Response Code**: HTTP status code from the API (200, 404, 500, etc.)
+- **Error Message**: Details if request failed, "-" otherwise
+- **Normalized**: YES if data was successfully normalized and written to main sheet, NO otherwise
+
+**Benefits:**
+
+- 📊 **Track all requests**: See every URL/form factor combination attempted
+- ❌ **Identify failures**: Quickly spot which URLs are failing and why
+- 🐛 **Debug issues**: View exact error messages and response codes
+- 📈 **Monitor trends**: Historical view of API reliability over time
+- 🔍 **Audit trail**: Complete record of all executions
+
+**Example History Records:**
+
+```
+exec_1234567890_5678 | 26-10-2025 14:30:25 | https://example.com    | PHONE   | SUCCESS | 200 | -         | YES
+exec_1234567890_5678 | 26-10-2025 14:30:26 | https://example.com    | DESKTOP | FAILED  | 404 | Not Found | NO
+exec_1234567890_5678 | 26-10-2025 14:30:27 | https://badurl.com     | PHONE   | FAILED  | -   | Fetch error: DNS lookup failed | NO
+```
+
+**Notes:**
+
+- History is logged even if the overall execution fails
+- All requests from the same `run()` call share the same Execution ID
+- The sheet is automatically created on first run with proper headers
+- Failed requests will show status "FAILED" with error details
+- Successfully fetched but not normalized responses show "NO" in the Normalized column
 
 ## Performance
 
@@ -105,6 +152,7 @@ This is well within Apps Script's 6-minute execution limit.
 
 **Missing data in spreadsheet**
 
+- Check the **executionHistory** sheet to see which requests failed and why
 - Check Apps Script logs (View → Logs) for API errors
 - Verify URLs are in the CrUX dataset (not all URLs have data)
 - Check API key permissions and quota
@@ -131,7 +179,7 @@ Add this function to your script and run it once:
  */
 function setupApiKey() {
   const apiKey = "YOUR_ACTUAL_API_KEY_HERE";
-  PropertiesService.getScriptProperties().setProperty('CRUX_API_KEY', apiKey);
+  PropertiesService.getScriptProperties().setProperty("CRUX_API_KEY", apiKey);
   Logger.log("API key stored successfully");
 }
 ```
@@ -161,7 +209,8 @@ const main = async () => {
     executionFlag = true;
 
     // Retrieve API key from Script Properties
-    const apiKey = PropertiesService.getScriptProperties().getProperty('CRUX_API_KEY');
+    const apiKey =
+      PropertiesService.getScriptProperties().getProperty("CRUX_API_KEY");
 
     // Validate it exists
     if (!apiKey) {
@@ -175,7 +224,7 @@ const main = async () => {
     const cruxExtractor = new CruxExtractor({
       urls,
       spreadsheetId,
-      apiKey,  // Uses the retrieved value
+      apiKey, // Uses the retrieved value
       formFactor: ["PHONE", "DESKTOP", "ALL_FORM_FACTORS"],
       sheetTabName: "cruxData",
     });
@@ -197,8 +246,8 @@ You can also store the spreadsheet ID and other sensitive config:
 function setupConfig() {
   const properties = PropertiesService.getScriptProperties();
   properties.setProperties({
-    'CRUX_API_KEY': 'your-api-key-here',
-    'SPREADSHEET_ID': 'your-spreadsheet-id-here'
+    CRUX_API_KEY: "your-api-key-here",
+    SPREADSHEET_ID: "your-spreadsheet-id-here",
   });
   Logger.log("Configuration stored successfully");
 }
@@ -207,8 +256,10 @@ function setupConfig() {
 Then retrieve both:
 
 ```javascript
-const apiKey = PropertiesService.getScriptProperties().getProperty('CRUX_API_KEY');
-const spreadsheetId = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
+const apiKey =
+  PropertiesService.getScriptProperties().getProperty("CRUX_API_KEY");
+const spreadsheetId =
+  PropertiesService.getScriptProperties().getProperty("SPREADSHEET_ID");
 ```
 
 #### Useful PropertiesService Methods
@@ -218,13 +269,13 @@ const spreadsheetId = PropertiesService.getScriptProperties().getProperty('SPREA
 const allProps = PropertiesService.getScriptProperties().getProperties();
 
 // Delete a property
-PropertiesService.getScriptProperties().deleteProperty('CRUX_API_KEY');
+PropertiesService.getScriptProperties().deleteProperty("CRUX_API_KEY");
 
 // Delete all properties
 PropertiesService.getScriptProperties().deleteAllProperties();
 
 // Update a property
-PropertiesService.getScriptProperties().setProperty('CRUX_API_KEY', 'new-key');
+PropertiesService.getScriptProperties().setProperty("CRUX_API_KEY", "new-key");
 ```
 
 #### Benefits

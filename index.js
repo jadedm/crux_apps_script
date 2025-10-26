@@ -548,7 +548,12 @@ class CruxExtractor {
 
       const startRow = historySheet.getLastRow() + 1;
       historySheet
-        .getRange(startRow, 1, rows.length, CruxExtractor.CONFIG.HISTORY_COLUMN_COUNT)
+        .getRange(
+          startRow,
+          1,
+          rows.length,
+          CruxExtractor.CONFIG.HISTORY_COLUMN_COUNT
+        )
         .setValues(rows);
 
       Logger.log(
@@ -575,7 +580,9 @@ class CruxExtractor {
    * @throws {Error} If any step in the pipeline fails or no valid responses are collected
    */
   async run() {
-    const executionId = `exec_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+    const executionId = `exec_${Date.now()}_${Math.floor(
+      Math.random() * 10000
+    )}`;
 
     try {
       Logger.log("Crux Extractor:: Starting execution");
