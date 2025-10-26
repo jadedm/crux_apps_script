@@ -16,7 +16,7 @@ Fetches CrUX metrics (LCP, FID, CLS, FCP) for specified URLs across different fo
 
 ## Configuration
 
-Edit the `main()` function (starting at line 332) with your settings:
+Edit the `main()` function (starting at line 457) with your settings:
 
 ```javascript
 const urls = ["https://example.com", "https://example.com/page"];
@@ -63,19 +63,11 @@ The implementation uses **sequential requests with 400ms delays** instead of `Ur
 
 ### Error Handling
 
-Non-200 responses are logged and skipped (line 100-108). Failed URLs won't stop execution but will be missing from the output. Check Apps Script logs to identify failures.
+Non-200 responses are logged and skipped. Failed URLs won't stop execution but will be missing from the output. Check Apps Script logs to identify failures.
 
 ### Execution Flag Workaround
 
-The global `executionFlag` (line 2) prevents duplicate execution within the same run, working around a known Apps Script timing bug where triggers sometimes fire twice.
-
-## Known Issues
-
-1. **Error handling pattern** (lines 68, 119, 226, 298, 328): Uses `throw new Error(error.stack)` which can create malformed error messages
-2. **Typo** (line 320): "reponses" should be "responses"
-3. **Sheet lookup** (lines 244-254): Could use `getSheetByName()` instead of looping through all sheets
-4. **No retry logic**: Transient API failures result in missing data
-5. **No input validation**: Malformed URLs will fail silently
+The global `executionFlag` prevents duplicate execution within the same run, working around a known Apps Script timing bug where triggers sometimes fire twice.
 
 ## Output Schema
 
@@ -109,7 +101,7 @@ This is well within Apps Script's 6-minute execution limit.
 
 **"Service invoked too many times" error**
 
-- Should not occur with current implementation. If it does, increase the sleep duration on line 95.
+- Should not occur with current implementation. If it does, increase the `SLEEP_DURATION_MS` value in `CruxExtractor.CONFIG`.
 
 **Missing data in spreadsheet**
 
@@ -121,3 +113,126 @@ This is well within Apps Script's 6-minute execution limit.
 
 - Some URLs may not have CrUX data (low traffic sites)
 - Form factor data may not be available for all URLs
+
+## Enhancements
+
+### Secure API Key Storage with PropertiesService
+
+Instead of hardcoding your API key in the script, use Google Apps Script's PropertiesService to store it securely.
+
+#### Step 1: Store Your API Key (One-Time Setup)
+
+Add this function to your script and run it once:
+
+```javascript
+/**
+ * One-time setup function to store your API key securely.
+ * Run this once from the Apps Script editor.
+ */
+function setupApiKey() {
+  const apiKey = "YOUR_ACTUAL_API_KEY_HERE";
+  PropertiesService.getScriptProperties().setProperty('CRUX_API_KEY', apiKey);
+  Logger.log("API key stored successfully");
+}
+```
+
+**How to run it:**
+
+1. Paste this function in your script
+2. Replace `"YOUR_ACTUAL_API_KEY_HERE"` with your real API key
+3. Select `setupApiKey` from the function dropdown in Apps Script editor
+4. Click Run
+5. Check logs to confirm "API key stored successfully"
+
+#### Step 2: Retrieve the API Key in Your Main Function
+
+Update your `main` function to retrieve the API key:
+
+```javascript
+const main = async () => {
+  try {
+    Logger.log("Crux Extractor:: Starting script execution");
+
+    if (executionFlag) {
+      Logger.log("Duplicate execution detected, exiting");
+      return;
+    }
+
+    executionFlag = true;
+
+    // Retrieve API key from Script Properties
+    const apiKey = PropertiesService.getScriptProperties().getProperty('CRUX_API_KEY');
+
+    // Validate it exists
+    if (!apiKey) {
+      throw new Error("API key not found. Run setupApiKey() first.");
+    }
+
+    // Your configuration
+    const urls = ["https://example.com"]; // Add your URLs
+    const spreadsheetId = "YOUR_SPREADSHEET_ID"; // Add your spreadsheet ID
+
+    const cruxExtractor = new CruxExtractor({
+      urls,
+      spreadsheetId,
+      apiKey,  // Uses the retrieved value
+      formFactor: ["PHONE", "DESKTOP", "ALL_FORM_FACTORS"],
+      sheetTabName: "cruxData",
+    });
+
+    await cruxExtractor.run();
+    Logger.log("Crux Extractor:: Script execution successful");
+  } catch (error) {
+    Logger.log("Crux Extractor:: Script execution unsuccessful");
+    Logger.log(error.message || error.stack);
+  }
+};
+```
+
+#### Optional: Store Multiple Configuration Values
+
+You can also store the spreadsheet ID and other sensitive config:
+
+```javascript
+function setupConfig() {
+  const properties = PropertiesService.getScriptProperties();
+  properties.setProperties({
+    'CRUX_API_KEY': 'your-api-key-here',
+    'SPREADSHEET_ID': 'your-spreadsheet-id-here'
+  });
+  Logger.log("Configuration stored successfully");
+}
+```
+
+Then retrieve both:
+
+```javascript
+const apiKey = PropertiesService.getScriptProperties().getProperty('CRUX_API_KEY');
+const spreadsheetId = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
+```
+
+#### Useful PropertiesService Methods
+
+```javascript
+// Get all properties
+const allProps = PropertiesService.getScriptProperties().getProperties();
+
+// Delete a property
+PropertiesService.getScriptProperties().deleteProperty('CRUX_API_KEY');
+
+// Delete all properties
+PropertiesService.getScriptProperties().deleteAllProperties();
+
+// Update a property
+PropertiesService.getScriptProperties().setProperty('CRUX_API_KEY', 'new-key');
+```
+
+#### Benefits
+
+✅ API key not visible in code
+✅ Can share script without exposing credentials
+✅ Easy to update without editing code
+✅ Persists across executions
+✅ More secure than hardcoding
+
+**Note:** Script Properties are accessible to anyone who can edit the script. They provide obfuscation but not encryption.

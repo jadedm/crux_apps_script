@@ -1,8 +1,25 @@
-// global variable hack to counter apps script running twice;
+/**
+ * Global variable to prevent duplicate execution within the same Apps Script run.
+ * This is a workaround for a known Apps Script timing bug where triggers sometimes fire twice.
+ */
 let executionFlag = false;
 
+/**
+ * CruxExtractor - Extracts Chrome User Experience Report (CrUX) data and writes to Google Sheets.
+ *
+ * Fetches Core Web Vitals metrics (LCP, FID, CLS, FCP) from the Chrome UX Report API
+ * for specified URLs and form factors, then appends the data to a Google Sheets spreadsheet.
+ */
 class CruxExtractor {
-  // Constants
+  /**
+   * Configuration constants for the CruxExtractor.
+   * @type {Object}
+   * @property {number} SLEEP_DURATION_MS - Delay in milliseconds between API calls to avoid rate limits
+   * @property {number} HTTP_STATUS_OK - Expected HTTP status code for successful responses
+   * @property {number} COLUMN_COUNT - Number of columns in the spreadsheet output
+   * @property {number} HEADER_ROW - Row number where headers are placed
+   * @property {number} HEADER_START_COL - Column number where headers start
+   */
   static CONFIG = {
     SLEEP_DURATION_MS: 400,
     HTTP_STATUS_OK: 200,
@@ -11,6 +28,18 @@ class CruxExtractor {
     HEADER_START_COL: 1,
   };
 
+  /**
+   * Creates a new CruxExtractor instance.
+   *
+   * @param {Object} config - Configuration object
+   * @param {string[]} config.urls - Array of URLs to fetch CrUX data for
+   * @param {string} config.spreadsheetId - Google Sheets spreadsheet ID
+   * @param {string} config.apiKey - Google API key with Chrome UX Report API access
+   * @param {string[]} [config.formFactor=["PHONE", "DESKTOP", "ALL_FORM_FACTORS"]] - Form factors to query
+   * @param {string} [config.cruxUrl] - Base URL for CrUX API endpoint
+   * @param {string} [config.sheetTabName="cruxData"] - Name of the sheet tab to write data to
+   * @throws {Error} If any required parameter is missing or empty
+   */
   constructor({
     urls = [],
     spreadsheetId = "",
@@ -44,6 +73,12 @@ class CruxExtractor {
     this.sheetTabName = sheetTabName;
   }
 
+  /**
+   * Validates if a string is a valid HTTP or HTTPS URL.
+   *
+   * @param {string} urlString - The URL string to validate
+   * @returns {boolean} True if the URL is valid and uses HTTP/HTTPS protocol, false otherwise
+   */
   isValidUrl(urlString) {
     try {
       const url = new URL(urlString);
@@ -53,6 +88,16 @@ class CruxExtractor {
     }
   }
 
+  /**
+   * Builds an array of request payloads for the CrUX API.
+   *
+   * Creates one request for each combination of URL and form factor.
+   * Invalid URLs are logged and skipped.
+   *
+   * @async
+   * @returns {Promise<Object[]>} Array of request objects for UrlFetchApp.fetch()
+   * @throws {Error} If building request payloads fails
+   */
   async buildRequestUrls() {
     try {
       const self = this;
@@ -94,6 +139,16 @@ class CruxExtractor {
     }
   }
 
+  /**
+   * Fetches CrUX data from the Chrome UX Report API sequentially.
+   *
+   * Makes API calls one at a time with a configurable delay between requests
+   * to avoid rate limiting. Non-200 responses are logged and skipped.
+   *
+   * @async
+   * @returns {Promise<Object[]>} Array of successful API response objects
+   * @throws {Error} If fetching data fails
+   */
   async fetchData() {
     try {
       const self = this;
@@ -145,7 +200,19 @@ class CruxExtractor {
     }
   }
 
+  /**
+   * Normalizes CrUX API responses into flat arrays for spreadsheet insertion.
+   *
+   * Extracts Core Web Vitals metrics (LCP, FID, CLS, FCP) from API response objects
+   * and formats them as arrays with timestamps. Missing metrics default to "-".
+   *
+   * @async
+   * @returns {Promise<Array[]>} Array of arrays, each containing 19 columns of data:
+   *   [Date, Platform, URL, LCP metrics (4), FID metrics (4), CLS metrics (4), FCP metrics (4)]
+   * @throws {Error} If normalizing data fails
+   */
   async normalizeData() {
+    // Get timezone and format current timestamp for each row
     try {
       const self = this;
 
@@ -252,6 +319,16 @@ class CruxExtractor {
     }
   }
 
+  /**
+   * Writes normalized CrUX data to a Google Sheets spreadsheet.
+   *
+   * Creates the specified sheet tab and headers if they don't exist.
+   * Appends new rows of data after the last existing row.
+   *
+   * @async
+   * @returns {Promise<void>}
+   * @throws {Error} If spreadsheet access fails or data cannot be written
+   */
   async addToSpreadsheet() {
     try {
       const self = this;
@@ -316,6 +393,19 @@ class CruxExtractor {
     }
   }
 
+  /**
+   * Executes the complete CrUX data extraction pipeline.
+   *
+   * Orchestrates the four-step process:
+   * 1. Build request payloads
+   * 2. Fetch data from CrUX API
+   * 3. Normalize responses into arrays
+   * 4. Write data to spreadsheet
+   *
+   * @async
+   * @returns {Promise<void>}
+   * @throws {Error} If any step in the pipeline fails or no valid responses are collected
+   */
   async run() {
     try {
       Logger.log("Crux Extractor:: Starting CruxExtractor Execution");
@@ -346,10 +436,28 @@ class CruxExtractor {
   }
 }
 
+/**
+ * Main entry point for the CrUX data extraction script.
+ *
+ * Configures and executes the CruxExtractor to fetch Chrome UX Report data
+ * and write it to Google Sheets. Uses executionFlag to prevent duplicate runs
+ * within the same execution (Apps Script timing bug workaround).
+ *
+ * Configuration Instructions:
+ * - urls: Array of URLs to extract data for
+ * - spreadsheetId: Google Sheets spreadsheet ID to write data to
+ * - apiKey: Google API key with Chrome UX Report API access
+ *   (See: https://developers.google.com/web/tools/chrome-user-experience-report/api/guides/getting-started)
+ * - formFactor: Screen types to query (PHONE, DESKTOP, ALL_FORM_FACTORS)
+ * - sheetTabName: Name of the sheet tab (will create if not present)
+ *
+ * @async
+ * @returns {Promise<void>}
+ */
 const main = async () => {
   try {
     Logger.log("Crux Extractor:: Starting script execution");
-    // this is a hack to counter apps script running twice;
+
     if (executionFlag) {
       Logger.log(
         "Crux Extractor:: Exiting, script running again (Apps script bug probably?)"
@@ -359,16 +467,7 @@ const main = async () => {
 
     Logger.log("Crux Extractor:: Setting execution flag to true on first run");
     executionFlag = true;
-    /*
-      Add your data here 
 
-      urls: urls you need to extract data for
-      sheetTabName: Name of the tab in sheet; Will create a new one if not present
-      spreadsheetId: Id of the spreadsheet to which you want to push the data to
-      apiKey: Google api key to make requests to google crux api
-      https://developers.google.com/web/tools/chrome-user-experience-report/api/guides/getting-started
-      formFactor to define for which screen you need data for
-    */
     const urls = [];
     const spreadsheetId = "";
     const apiKey = "";
@@ -388,7 +487,6 @@ const main = async () => {
     });
 
     Logger.log("Crux Extractor:: invoking run method");
-    // fetch data for urls and add to spreadsheet
     await cruxExtractor.run();
 
     Logger.log("Crux Extractor:: Script execution successful");
