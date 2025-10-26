@@ -26,6 +26,8 @@ class CruxExtractor {
     COLUMN_COUNT: 19,
     HEADER_ROW: 1,
     HEADER_START_COL: 1,
+    HISTORY_SHEET_NAME: "executionHistory",
+    HISTORY_COLUMN_COUNT: 8,
   };
 
   /**
@@ -167,6 +169,7 @@ class CruxExtractor {
    *
    * Makes API calls one at a time with a configurable delay between requests
    * to avoid rate limiting. Non-200 responses and JSON parse errors are logged and skipped.
+   * Tracks detailed execution history for each request.
    *
    * @async
    * @returns {Promise<Object[]>} Array of successful API response objects
@@ -179,6 +182,7 @@ class CruxExtractor {
       }
 
       this.filteredResponse = [];
+      this.executionRecords = [];
       const requestsLength = this.requests.length;
 
       for (let reqIndex = 0; reqIndex < requestsLength; reqIndex++) {
@@ -189,32 +193,58 @@ class CruxExtractor {
         );
         Logger.log(`Payload: ${this.requests[reqIndex].payload}`);
 
-        const response = UrlFetchApp.fetch(
-          this.cruxUrl,
-          this.requests[reqIndex]
-        );
+        const payload = JSON.parse(this.requests[reqIndex].payload);
+        const url = payload.url;
+        const formFactor = payload.formFactor;
 
-        const statusCode = response.getResponseCode();
-        Logger.log(`Crux Extractor:: Received status code: ${statusCode}`);
-
-        if (statusCode !== CruxExtractor.CONFIG.HTTP_STATUS_OK) {
-          Logger.log(`Non-200 response for request ${reqIndex + 1}`);
-          Logger.log(`Payload: ${this.requests[reqIndex].payload}`);
-          Logger.log(`Status: ${statusCode}`);
-          Logger.log(`Response: ${response.getContentText()}`);
-          continue;
-        }
+        let statusCode;
+        let errorMessage = "-";
+        let status = "FAILED";
 
         try {
-          const responseContent = JSON.parse(response.getContentText());
-          this.filteredResponse.push(responseContent);
-          Logger.log(`Successfully parsed response ${reqIndex + 1}`);
-        } catch (parseError) {
-          Logger.log(`Failed to parse JSON for request ${reqIndex + 1}`);
-          Logger.log(`Error: ${parseError.message}`);
-          Logger.log(`Response text: ${response.getContentText()}`);
-          continue;
+          const response = UrlFetchApp.fetch(
+            this.cruxUrl,
+            this.requests[reqIndex]
+          );
+
+          statusCode = response.getResponseCode();
+          Logger.log(`Crux Extractor:: Received status code: ${statusCode}`);
+
+          if (statusCode !== CruxExtractor.CONFIG.HTTP_STATUS_OK) {
+            errorMessage = `Non-200 response: ${response.getContentText()}`;
+            Logger.log(`Non-200 response for request ${reqIndex + 1}`);
+            Logger.log(`Payload: ${this.requests[reqIndex].payload}`);
+            Logger.log(`Status: ${statusCode}`);
+            Logger.log(`Response: ${response.getContentText()}`);
+          } else {
+            try {
+              const responseContent = JSON.parse(response.getContentText());
+              this.filteredResponse.push(responseContent);
+              status = "SUCCESS";
+              errorMessage = "-";
+              Logger.log(`Successfully parsed response ${reqIndex + 1}`);
+            } catch (parseError) {
+              errorMessage = `JSON parse error: ${parseError.message}`;
+              Logger.log(`Failed to parse JSON for request ${reqIndex + 1}`);
+              Logger.log(`Error: ${parseError.message}`);
+              Logger.log(`Response text: ${response.getContentText()}`);
+            }
+          }
+        } catch (fetchError) {
+          statusCode = "-";
+          errorMessage = `Fetch error: ${fetchError.message}`;
+          Logger.log(`Failed to fetch request ${reqIndex + 1}`);
+          Logger.log(`Error: ${fetchError.message}`);
         }
+
+        this.executionRecords.push({
+          url,
+          formFactor,
+          status,
+          responseCode: statusCode,
+          errorMessage,
+          normalized: "NO",
+        });
 
         if (reqIndex < requestsLength - 1) {
           Utilities.sleep(CruxExtractor.CONFIG.SLEEP_DURATION_MS);
@@ -239,6 +269,7 @@ class CruxExtractor {
    *
    * Extracts Core Web Vitals metrics (LCP, FID, CLS, FCP) from API response objects
    * and formats them as arrays with timestamps. Missing metrics default to "-".
+   * Updates execution records to mark successfully normalized responses.
    *
    * @async
    * @returns {Promise<Array[]>} Array of arrays, each containing 19 columns of data:
@@ -301,6 +332,16 @@ class CruxExtractor {
             ...cls,
             ...fcp,
           ]);
+
+          const recordIndex = this.executionRecords.findIndex(
+            (record) =>
+              record.url === url &&
+              record.formFactor === formFactor &&
+              record.status === "SUCCESS"
+          );
+          if (recordIndex !== -1) {
+            this.executionRecords[recordIndex].normalized = "YES";
+          }
         } catch (itemError) {
           Logger.log(`Failed to normalize response: ${itemError.message}`);
           Logger.log(`Skipping this response and continuing`);
@@ -407,21 +448,138 @@ class CruxExtractor {
   }
 
   /**
+   * Gets or creates the execution history sheet.
+   *
+   * Creates a new sheet tab with headers if it doesn't exist.
+   * Headers: Execution ID, Timestamp, URL, Form Factor, Status, Response Code, Error Message, Normalized
+   *
+   * @returns {GoogleAppsScript.Spreadsheet.Sheet} The execution history sheet
+   * @throws {Error} If spreadsheet access fails
+   */
+  getExecutionHistorySheet() {
+    try {
+      Logger.log("Crux Extractor:: Getting execution history sheet");
+      const spreadsheet = SpreadsheetApp.openById(this.spreadsheetId);
+      let historySheet = spreadsheet.getSheetByName(
+        CruxExtractor.CONFIG.HISTORY_SHEET_NAME
+      );
+
+      if (!historySheet) {
+        Logger.log(
+          "Crux Extractor:: Creating execution history sheet with headers"
+        );
+        historySheet = spreadsheet.insertSheet(
+          CruxExtractor.CONFIG.HISTORY_SHEET_NAME
+        );
+
+        const headers = [
+          "Execution ID",
+          "Timestamp",
+          "URL",
+          "Form Factor",
+          "Status",
+          "Response Code",
+          "Error Message",
+          "Normalized",
+        ];
+
+        if (headers.length !== CruxExtractor.CONFIG.HISTORY_COLUMN_COUNT) {
+          Logger.log(
+            `Warning: History header count (${headers.length}) does not match CONFIG.HISTORY_COLUMN_COUNT (${CruxExtractor.CONFIG.HISTORY_COLUMN_COUNT})`
+          );
+        }
+
+        historySheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+      }
+
+      return historySheet;
+    } catch (error) {
+      Logger.log("Crux Extractor:: Error occurred: getExecutionHistorySheet");
+      throw error;
+    }
+  }
+
+  /**
+   * Logs execution history records to the execution history sheet.
+   *
+   * Records include execution ID, timestamp, URL, form factor, status, response code,
+   * error message (if any), and whether the response was normalized successfully.
+   *
+   * @param {string} executionId - Unique identifier for this execution run
+   * @param {Array<Object>} records - Array of execution record objects
+   * @param {string} records[].url - The URL that was requested
+   * @param {string} records[].formFactor - Form factor (PHONE, DESKTOP, ALL_FORM_FACTORS)
+   * @param {string} records[].status - SUCCESS or FAILED
+   * @param {number} [records[].responseCode] - HTTP response code
+   * @param {string} [records[].errorMessage] - Error message if failed
+   * @param {string} records[].normalized - Whether response was normalized (YES/NO)
+   * @returns {void}
+   * @throws {Error} If writing to history sheet fails
+   */
+  logExecutionHistory(executionId, records) {
+    try {
+      if (!records || records.length === 0) {
+        Logger.log("Crux Extractor:: No execution history records to log");
+        return;
+      }
+
+      Logger.log(
+        `Crux Extractor:: Logging ${records.length} execution history records`
+      );
+      const historySheet = this.getExecutionHistorySheet();
+
+      const timeZone = Session.getScriptTimeZone();
+      const timestamp = Utilities.formatDate(
+        new Date(),
+        timeZone,
+        "dd-MM-yyyy HH:mm:ss"
+      );
+
+      const rows = records.map((record) => [
+        executionId,
+        timestamp,
+        record.url || "-",
+        record.formFactor || "-",
+        record.status || "UNKNOWN",
+        record.responseCode || "-",
+        record.errorMessage || "-",
+        record.normalized || "NO",
+      ]);
+
+      const startRow = historySheet.getLastRow() + 1;
+      historySheet
+        .getRange(startRow, 1, rows.length, CruxExtractor.CONFIG.HISTORY_COLUMN_COUNT)
+        .setValues(rows);
+
+      Logger.log(
+        `Crux Extractor:: Successfully logged execution history to row ${startRow}`
+      );
+    } catch (error) {
+      Logger.log("Crux Extractor:: Error occurred: logExecutionHistory");
+      Logger.log(`Error details: ${error.message}`);
+    }
+  }
+
+  /**
    * Executes the complete CrUX data extraction pipeline.
    *
-   * Orchestrates the four-step process:
+   * Orchestrates the five-step process:
    * 1. Build request payloads
    * 2. Fetch data from CrUX API
    * 3. Normalize responses into arrays
    * 4. Write data to spreadsheet
+   * 5. Log execution history
    *
    * @async
    * @returns {Promise<Object>} Summary object with execution statistics
    * @throws {Error} If any step in the pipeline fails or no valid responses are collected
    */
   async run() {
+    const executionId = `exec_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+
     try {
       Logger.log("Crux Extractor:: Starting execution");
+      Logger.log(`Execution ID: ${executionId}`);
 
       Logger.log("Step 1: Building request payloads");
       const requests = await this.buildRequestUrls();
@@ -447,7 +605,11 @@ class CruxExtractor {
       Logger.log("Step 4: Writing data to spreadsheet");
       await this.addToSpreadsheet();
 
+      Logger.log("Step 5: Logging execution history");
+      this.logExecutionHistory(executionId, this.executionRecords);
+
       const summary = {
+        executionId,
         totalRequests: requests.length,
         successfulResponses: responses.length,
         rowsWritten: normalized.length,
@@ -459,6 +621,18 @@ class CruxExtractor {
     } catch (error) {
       Logger.log("Crux Extractor:: Error occurred during execution");
       Logger.log(`Error details: ${error.message}`);
+
+      if (this.executionRecords && this.executionRecords.length > 0) {
+        Logger.log("Logging partial execution history before throwing error");
+        try {
+          this.logExecutionHistory(executionId, this.executionRecords);
+        } catch (historyError) {
+          Logger.log(
+            `Failed to log execution history: ${historyError.message}`
+          );
+        }
+      }
+
       throw error;
     }
   }
