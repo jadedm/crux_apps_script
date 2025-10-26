@@ -152,6 +152,52 @@ exec_1234567890_5678 | 26-10-2025 14:30:27 | https://badurl.com     | PHONE   | 
 - Failed requests will show status "FAILED" with error details
 - Successfully fetched but not normalized responses show "NO" in the Normalized column
 
+## Dashboard & Visualizations
+
+After extracting CrUX data, you can generate an automated dashboard with visualizations:
+
+### Setup Dashboard
+
+1. Copy the contents of `create-dashboard.js` into your Apps Script project
+2. Update the configuration:
+   ```javascript
+   const SPREADSHEET_ID = "your-spreadsheet-id-here";
+   const DATA_SHEET_NAME = "cruxData";
+   ```
+3. Select `createCruxDashboard` from the function dropdown
+4. Click Run
+
+### Dashboard Includes:
+
+📊 **Core Web Vitals Score Distribution**
+- Stacked bar chart showing Good/Needs Improvement/Poor percentages
+- Visual breakdown of LCP, INP, CLS, FCP performance
+- Color-coded: Green (Good), Orange (Needs Improvement), Red (Poor)
+
+📈 **P75 Values Comparison**
+- Column chart comparing 75th percentile values across URLs
+- Lower values are better (except for Good percentages)
+- Shows LCP, INP, FCP P75 values in milliseconds
+
+📱 **Form Factor Comparison**
+- Compares performance across PHONE, DESKTOP, AGGREGATED
+- Shows "Good" score percentages for each metric
+- Helps identify which device types need optimization
+
+📋 **Summary Statistics**
+- Average Good% for each Core Web Vital
+- Average P75 values
+- Status indicators (✅ Good, ⚠️ Needs Work, ❌ Poor)
+- Based on thresholds: >75% = Good, >50% = Needs Work, <50% = Poor
+
+### Manual Charting (Alternative)
+
+You can also create custom charts manually:
+1. Select data in cruxData sheet
+2. Insert → Chart
+3. Choose chart type (Recommended: Stacked Bar, Column, Line)
+4. Customize as needed
+
 ## Performance
 
 For 10 URLs × 3 form factors:
