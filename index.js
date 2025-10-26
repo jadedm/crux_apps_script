@@ -2,6 +2,15 @@
 let executionFlag = false;
 
 class CruxExtractor {
+  // Constants
+  static CONFIG = {
+    SLEEP_DURATION_MS: 400,
+    HTTP_STATUS_OK: 200,
+    COLUMN_COUNT: 19,
+    HEADER_ROW: 1,
+    HEADER_START_COL: 1,
+  };
+
   constructor({
     urls = [],
     spreadsheetId = "",
@@ -35,6 +44,15 @@ class CruxExtractor {
     this.sheetTabName = sheetTabName;
   }
 
+  isValidUrl(urlString) {
+    try {
+      const url = new URL(urlString);
+      return url.protocol === "http:" || url.protocol === "https:";
+    } catch {
+      return false;
+    }
+  }
+
   async buildRequestUrls() {
     try {
       const self = this;
@@ -42,6 +60,13 @@ class CruxExtractor {
       self.requests = [];
 
       for (let urlIndex = 0; urlIndex < self.urls?.length; urlIndex++) {
+        const currentUrl = self.urls[urlIndex];
+
+        if (!self.isValidUrl(currentUrl)) {
+          Logger.log(`Crux Extractor:: Invalid URL skipped: ${currentUrl}`);
+          continue;
+        }
+
         for (
           let formFactorIndex = 0;
           formFactorIndex < self.formFactor?.length;
@@ -52,7 +77,7 @@ class CruxExtractor {
             muteHttpExceptions: true,
             contentType: "application/json",
             payload: JSON.stringify({
-              url: self.urls[urlIndex],
+              url: currentUrl,
               formFactor: self.formFactor[formFactorIndex],
             }),
           });
@@ -64,8 +89,8 @@ class CruxExtractor {
       );
       return self.requests;
     } catch (error) {
-      Logger.log("Crux Extractor:: Error occured: buildRequestUrls");
-      throw new Error(error.stack);
+      Logger.log("Crux Extractor:: Error occurred: buildRequestUrls");
+      throw error;
     }
   }
 
@@ -92,12 +117,12 @@ class CruxExtractor {
           `Crux Extractor:: received response with status code ${response.getResponseCode()}`
         );
 
-        Utilities.sleep(400);
+        Utilities.sleep(CruxExtractor.CONFIG.SLEEP_DURATION_MS);
         Logger.log(
-          "Crux Extractor:: sleeping 400 milli-seconds after making an api call"
+          `Crux Extractor:: sleeping ${CruxExtractor.CONFIG.SLEEP_DURATION_MS} milli-seconds after making an api call`
         );
 
-        if (response.getResponseCode() !== 200) {
+        if (response.getResponseCode() !== CruxExtractor.CONFIG.HTTP_STATUS_OK) {
           Logger.log("Crux Extractor:: Non 200 response code for ");
           Logger.log(self.requests[urlIndex]);
 
@@ -115,8 +140,8 @@ class CruxExtractor {
       Logger.log("Crux Extractor:: Returning response for normalizing");
       return self.filteredResponse;
     } catch (error) {
-      Logger.log("Crux Extractor:: Error occured: fetchData");
-      throw new Error(error.stack);
+      Logger.log("Crux Extractor:: Error occurred: fetchData");
+      throw error;
     }
   }
 
@@ -222,8 +247,8 @@ class CruxExtractor {
 
       return self.normalizedResponse;
     } catch (error) {
-      Logger.log("Crux Extractor:: Error occured: normalizeData");
-      throw new Error(error.stack);
+      Logger.log("Crux Extractor:: Error occurred: normalizeData");
+      throw error;
     }
   }
 
@@ -231,36 +256,28 @@ class CruxExtractor {
     try {
       const self = this;
 
-      let sheetIndex;
-      let reportActiveSheet;
-
       Logger.log("Crux Extractor:: Setting active spreadsheet");
       const reportSS = SpreadsheetApp.openById(self.spreadsheetId);
-      const allReportSheets = reportSS.getSheets();
 
-      Logger.log(
-        "Crux Extractor:: checking if tab already exists to find index"
-      );
-      for (
-        let reportIndex = 0;
-        reportIndex < allReportSheets?.length;
-        reportIndex++
-      ) {
-        if (allReportSheets[reportIndex].getName() === self.sheetTabName) {
-          Logger.log("Crux Extractor:: Sheet found, saving index");
-          sheetIndex = allReportSheets[reportIndex];
-          reportActiveSheet = reportSS.setActiveSheet(sheetIndex);
-        }
-      }
+      Logger.log("Crux Extractor:: Checking if tab already exists");
+      let reportActiveSheet = reportSS.getSheetByName(self.sheetTabName);
 
-      Logger.log(
-        "Crux Extractor:: If tab does not exist, create a new tab and add headers"
-      );
-      if (!sheetIndex) {
+      if (reportActiveSheet) {
+        Logger.log("Crux Extractor:: Sheet found, setting as active");
+        reportSS.setActiveSheet(reportActiveSheet);
+      } else {
+        Logger.log(
+          "Crux Extractor:: Tab does not exist, creating new tab and adding headers"
+        );
         const insertedSS = reportSS.insertSheet(self.sheetTabName);
         reportActiveSheet = reportSS.setActiveSheet(insertedSS);
         reportActiveSheet
-          .getRange(1, 1, 1, 19)
+          .getRange(
+            CruxExtractor.CONFIG.HEADER_ROW,
+            CruxExtractor.CONFIG.HEADER_START_COL,
+            1,
+            CruxExtractor.CONFIG.COLUMN_COUNT
+          )
           .setValues([
             [
               "Date",
@@ -294,8 +311,8 @@ class CruxExtractor {
         .getRange(reportActiveSheet.getLastRow() + 1, 1, row, column)
         .setValues(self.normalizedResponse);
     } catch (error) {
-      Logger.log("Crux Extractor:: Error occured: addToSpreadsheet");
-      throw new Error(error.stack);
+      Logger.log("Crux Extractor:: Error occurred: addToSpreadsheet");
+      throw error;
     }
   }
 
@@ -317,14 +334,14 @@ class CruxExtractor {
 
       Logger.log("Crux Extractor:: Adding data to sheets");
       if (!this.normalizedResponse || !this.normalizedResponse.length) {
-        throw new Error("Crux Extractor: No reponses to add to sheet");
+        throw new Error("Crux Extractor: No responses to add to sheet");
       }
       await this.addToSpreadsheet();
 
       Logger.log("Crux Extractor Execution complete");
     } catch (error) {
-      Logger.log("Crux Extractor:: Error occured: run");
-      throw new Error(error.stack);
+      Logger.log("Crux Extractor:: Error occurred: run");
+      throw error;
     }
   }
 }
