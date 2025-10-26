@@ -73,15 +73,37 @@ The global `executionFlag` prevents duplicate execution within the same run, wor
 
 ### Main Data Sheet (cruxData)
 
-19 columns per row:
+31 columns per row:
 
 ```
 Date | Platform | URL |
 LCP (Good) | LCP (Needs Improvement) | LCP (Poor) | LCP (75th Percentile) |
-FID (Good) | FID (Needs Improvement) | FID (Poor) | FID (75th Percentile) |
+FID (Good) | FID (Needs Improvement) | FID (Poor) | FID (75th Percentile) - DEPRECATED |
+INP (Good) | INP (Needs Improvement) | INP (Poor) | INP (75th Percentile) |
 CLS (Good) | CLS (Needs Improvement) | CLS (Poor) | CLS (75th Percentile) |
-FCP (Good) | FCP (Needs Improvement) | FCP (Poor) | FCP (75th Percentile)
+FCP (Good) | FCP (Needs Improvement) | FCP (Poor) | FCP (75th Percentile) |
+TTFB (Good) | TTFB (Needs Improvement) | TTFB (Poor) | TTFB (75th Percentile) |
+RTT (Good) | RTT (Needs Improvement) | RTT (Poor) | RTT (75th Percentile)
 ```
+
+**Metrics Explained:**
+
+**Core Web Vitals:**
+- **LCP** (Largest Contentful Paint) - Measures loading performance
+- **INP** (Interaction to Next Paint) - Measures interactivity (replaced FID in March 2024)
+- **CLS** (Cumulative Layout Shift) - Measures visual stability
+- **FCP** (First Contentful Paint) - Measures initial rendering
+
+**Additional Metrics:**
+- **FID** (First Input Delay) - **DEPRECATED** - Old interactivity metric (kept for backward compatibility)
+- **TTFB** (Time to First Byte) - Measures server response time
+- **RTT** (Round Trip Time) - Measures network latency
+
+**Each metric includes:**
+- **Good** - Percentage of experiences in "good" range
+- **Needs Improvement** - Percentage in "needs improvement" range
+- **Poor** - Percentage in "poor" range
+- **75th Percentile (P75)** - The value at which 75% of experiences are better
 
 Missing metrics are denoted with "-".
 

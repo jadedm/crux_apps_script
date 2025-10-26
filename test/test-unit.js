@@ -382,7 +382,7 @@ function testNormalizeData() {
       const normalized = await extractor.normalizeData();
 
       TestFramework.expect(normalized.length).toBe(1);
-      TestFramework.expect(normalized[0].length).toBe(19); // 19 columns
+      TestFramework.expect(normalized[0].length).toBe(31); // 31 columns
       TestFramework.expect(normalized[0][0]).toBeTruthy(); // Date
       TestFramework.expect(normalized[0][1]).toBe("PHONE"); // Form factor
       TestFramework.expect(normalized[0][2]).toBe("https://example.com"); // URL
@@ -481,7 +481,7 @@ function testAddToSpreadsheet() {
         apiKey: "test-api-key",
       });
 
-      extractor.normalizedResponse = [Array(19).fill("test-data")];
+      extractor.normalizedResponse = [Array(31).fill("test-data")];
 
       await extractor.addToSpreadsheet();
 
@@ -498,7 +498,7 @@ function testAddToSpreadsheet() {
         apiKey: "test-api-key",
       });
 
-      extractor.normalizedResponse = [Array(19).fill("test-data")];
+      extractor.normalizedResponse = [Array(31).fill("test-data")];
 
       await extractor.addToSpreadsheet();
 

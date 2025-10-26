@@ -68,7 +68,7 @@ function testCompleteDataExtractionFlow() {
 
       const normalized = extractor.normalizedResponse;
       TestFramework.expect(normalized.length).toBe(1);
-      TestFramework.expect(normalized[0].length).toBe(19);
+      TestFramework.expect(normalized[0].length).toBe(31);
 
       // Verify data structure
       TestFramework.expect(typeof normalized[0][0]).toBe("string"); // Date

@@ -7,8 +7,12 @@ let executionFlag = false;
 /**
  * CruxExtractor - Extracts Chrome User Experience Report (CrUX) data and writes to Google Sheets.
  *
- * Fetches Core Web Vitals metrics (LCP, FID, CLS, FCP) from the Chrome UX Report API
- * for specified URLs and form factors, then appends the data to a Google Sheets spreadsheet.
+ * Fetches Core Web Vitals metrics (LCP, INP, CLS, FCP) and additional metrics (FID, TTFB, RTT)
+ * from the Chrome UX Report API for specified URLs and form factors, then appends the data
+ * to a Google Sheets spreadsheet.
+ *
+ * Note: FID (First Input Delay) is deprecated as of March 2024 and replaced by INP (Interaction to Next Paint).
+ * FID columns are kept for backward compatibility.
  */
 class CruxExtractor {
   /**
@@ -20,15 +24,17 @@ class CruxExtractor {
    * @property {number} HEADER_ROW - Row number where headers are placed
    * @property {number} HEADER_START_COL - Column number where headers start
    */
-  static CONFIG = {
-    SLEEP_DURATION_MS: 400,
-    HTTP_STATUS_OK: 200,
-    COLUMN_COUNT: 19,
-    HEADER_ROW: 1,
-    HEADER_START_COL: 1,
-    HISTORY_SHEET_NAME: "executionHistory",
-    HISTORY_COLUMN_COUNT: 8,
-  };
+  static get CONFIG() {
+    return {
+      SLEEP_DURATION_MS: 400,
+      HTTP_STATUS_OK: 200,
+      COLUMN_COUNT: 31,
+      HEADER_ROW: 1,
+      HEADER_START_COL: 1,
+      HISTORY_SHEET_NAME: "executionHistory",
+      HISTORY_COLUMN_COUNT: 8,
+    };
+  }
 
   /**
    * Creates a new CruxExtractor instance.
@@ -100,8 +106,17 @@ class CruxExtractor {
     }
 
     try {
-      const url = new URL(urlString);
-      return url.protocol === "http:" || url.protocol === "https:";
+      // Use regex pattern for Apps Script compatibility
+      // Validates http:// or https:// followed by valid domain characters
+      const urlPattern =
+        /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/;
+
+      if (!urlPattern.test(urlString)) {
+        Logger.log(`Invalid URL format: ${urlString}`);
+        return false;
+      }
+
+      return true;
     } catch (error) {
       Logger.log(`Invalid URL format: ${urlString} - ${error.message}`);
       return false;
@@ -267,13 +282,13 @@ class CruxExtractor {
   /**
    * Normalizes CrUX API responses into flat arrays for spreadsheet insertion.
    *
-   * Extracts Core Web Vitals metrics (LCP, FID, CLS, FCP) from API response objects
-   * and formats them as arrays with timestamps. Missing metrics default to "-".
+   * Extracts Core Web Vitals metrics (LCP, INP, CLS, FCP) and additional metrics (FID, TTFB, RTT)
+   * from API response objects and formats them as arrays with timestamps. Missing metrics default to "-".
    * Updates execution records to mark successfully normalized responses.
    *
    * @async
-   * @returns {Promise<Array[]>} Array of arrays, each containing 19 columns of data:
-   *   [Date, Platform, URL, LCP metrics (4), FID metrics (4), CLS metrics (4), FCP metrics (4)]
+   * @returns {Promise<Array[]>} Array of arrays, each containing 31 columns of data:
+   *   [Date, Platform, URL, LCP (4), FID (4), INP (4), CLS (4), FCP (4), TTFB (4), RTT (4)]
    * @throws {Error} If no data to normalize or all responses fail normalization
    */
   async normalizeData() {
@@ -317,8 +332,11 @@ class CruxExtractor {
 
           const lcp = extractMetric(metrics.largest_contentful_paint);
           const fid = extractMetric(metrics.first_input_delay);
+          const inp = extractMetric(metrics.interaction_to_next_paint);
           const cls = extractMetric(metrics.cumulative_layout_shift);
           const fcp = extractMetric(metrics.first_contentful_paint);
+          const ttfb = extractMetric(metrics.experimental_time_to_first_byte);
+          const rtt = extractMetric(metrics.round_trip_time);
 
           Logger.log(
             "Crux Extractor:: Pushing extracted data to response array"
@@ -329,8 +347,11 @@ class CruxExtractor {
             url,
             ...lcp,
             ...fid,
+            ...inp,
             ...cls,
             ...fcp,
+            ...ttfb,
+            ...rtt,
           ]);
 
           const recordIndex = this.executionRecords.findIndex(
@@ -399,10 +420,14 @@ class CruxExtractor {
           "LCP (Needs Improvement)",
           "LCP (Poor)",
           "LCP (75th Percentile)",
-          "FID (Good)",
-          "FID (Needs Improvement)",
-          "FID (Poor)",
-          "FID (75th Percentile)",
+          "FID (Good) - DEPRECATED",
+          "FID (Needs Improvement) - DEPRECATED",
+          "FID (Poor) - DEPRECATED",
+          "FID (75th Percentile) - DEPRECATED",
+          "INP (Good)",
+          "INP (Needs Improvement)",
+          "INP (Poor)",
+          "INP (75th Percentile)",
           "CLS (Good)",
           "CLS (Needs Improvement)",
           "CLS (Poor)",
@@ -411,6 +436,14 @@ class CruxExtractor {
           "FCP (Needs Improvement)",
           "FCP (Poor)",
           "FCP (75th Percentile)",
+          "TTFB (Good)",
+          "TTFB (Needs Improvement)",
+          "TTFB (Poor)",
+          "TTFB (75th Percentile)",
+          "RTT (Good)",
+          "RTT (Needs Improvement)",
+          "RTT (Poor)",
+          "RTT (75th Percentile)",
         ];
 
         if (headers.length !== CruxExtractor.CONFIG.COLUMN_COUNT) {
