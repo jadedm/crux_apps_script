@@ -2,16 +2,18 @@
  * CruxExtractor_ - internal implementation. Extracts Chrome User Experience
  * Report (CrUX) data and writes it to Google Sheets.
  *
- * Fetches Core Web Vitals metrics (LCP, INP, CLS, FCP) and additional metrics (FID, TTFB, RTT)
- * from the Chrome UX Report API for specified URLs and form factors, then appends the data
- * to a Google Sheets spreadsheet.
+ * Fetches Core Web Vitals metrics (LCP, INP, CLS, FCP) and additional metrics
+ * (TTFB, RTT) from the Chrome UX Report API for specified URLs and form factors,
+ * then appends the data to a Google Sheets spreadsheet.
  *
  * The trailing underscore keeps this class private when the project is used as
  * an Apps Script library. Call the public `extract()` function instead of
  * instantiating this directly.
  *
- * Note: FID (First Input Delay) is deprecated as of March 2024 and replaced by INP (Interaction to Next Paint).
- * FID columns are kept for backward compatibility.
+ * Note: FID (First Input Delay) was replaced by INP in March 2024 and REMOVED
+ * from the CrUX API on 2024-09-09 (the API no longer returns first_input_delay).
+ * The four FID columns are retained (always empty, "-") so existing sheets keep
+ * their column alignment; they carry no data.
  */
 class CruxExtractor_ {
   /**
@@ -301,7 +303,7 @@ class CruxExtractor_ {
   /**
    * Normalizes CrUX API responses into flat arrays for spreadsheet insertion.
    *
-   * Extracts Core Web Vitals metrics (LCP, INP, CLS, FCP) and additional metrics (FID, TTFB, RTT)
+   * Extracts Core Web Vitals metrics (LCP, INP, CLS, FCP) and additional metrics (TTFB, RTT; FID retained but empty)
    * from API response objects and formats them as arrays with timestamps. Missing metrics default to "-".
    * Updates execution records to mark successfully normalized responses.
    *
@@ -350,6 +352,8 @@ class CruxExtractor_ {
           };
 
           const lcp = extractMetric(metrics.largest_contentful_paint);
+          // first_input_delay was removed from the CrUX API on 2024-09-09, so
+          // it is never present in responses; this always yields four "-".
           const fid = extractMetric(metrics.first_input_delay);
           const inp = extractMetric(metrics.interaction_to_next_paint);
           const cls = extractMetric(metrics.cumulative_layout_shift);
@@ -445,10 +449,10 @@ class CruxExtractor_ {
           "LCP (Needs Improvement)",
           "LCP (Poor)",
           "LCP (75th Percentile)",
-          "FID (Good) - DEPRECATED",
-          "FID (Needs Improvement) - DEPRECATED",
-          "FID (Poor) - DEPRECATED",
-          "FID (75th Percentile) - DEPRECATED",
+          "FID (Good) - REMOVED 2024-09",
+          "FID (Needs Improvement) - REMOVED 2024-09",
+          "FID (Poor) - REMOVED 2024-09",
+          "FID (75th Percentile) - REMOVED 2024-09",
           "INP (Good)",
           "INP (Needs Improvement)",
           "INP (Poor)",
