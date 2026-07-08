@@ -137,7 +137,15 @@ class CruxExtractor {
     try {
       this.requests = [];
 
-      const validFormFactors = ["PHONE", "DESKTOP", "ALL_FORM_FACTORS"];
+      // PHONE, DESKTOP, TABLET are the API's real formFactor values.
+      // ALL_FORM_FACTORS is our config token for the aggregated record
+      // (translated to an omitted formFactor field below).
+      const validFormFactors = [
+        "PHONE",
+        "DESKTOP",
+        "TABLET",
+        "ALL_FORM_FACTORS",
+      ];
 
       for (const currentUrl of this.urls) {
         if (!this.isValidUrl(currentUrl)) {
