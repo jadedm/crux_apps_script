@@ -4,7 +4,7 @@ Google Apps Script tool that extracts Core Web Vitals data from the Chrome User 
 
 ## Overview
 
-Fetches CrUX metrics (LCP, FID, CLS, FCP) for specified URLs across different form factors (phone, desktop, all) and automatically appends the data to a Google Sheets spreadsheet with proper formatting.
+Fetches CrUX metrics (LCP, INP, CLS, FCP, TTFB, RTT) for specified URLs across different form factors (phone, desktop, tablet, all) and automatically appends the data to a Google Sheets spreadsheet with proper formatting.
 
 ## Two ways to use it
 
@@ -110,7 +110,7 @@ Apps Script time-based triggers can occasionally fire twice. In the copy-paste b
 ```
 Date | Platform | URL |
 LCP (Good) | LCP (Needs Improvement) | LCP (Poor) | LCP (75th Percentile) |
-FID (Good) | FID (Needs Improvement) | FID (Poor) | FID (75th Percentile) - DEPRECATED |
+FID (Good) | FID (Needs Improvement) | FID (Poor) | FID (75th Percentile) - REMOVED 2024-09 |
 INP (Good) | INP (Needs Improvement) | INP (Poor) | INP (75th Percentile) |
 CLS (Good) | CLS (Needs Improvement) | CLS (Poor) | CLS (75th Percentile) |
 FCP (Good) | FCP (Needs Improvement) | FCP (Poor) | FCP (75th Percentile) |
@@ -127,7 +127,7 @@ RTT (Good) | RTT (Needs Improvement) | RTT (Poor) | RTT (75th Percentile)
 - **FCP** (First Contentful Paint) - Measures initial rendering
 
 **Additional Metrics:**
-- **FID** (First Input Delay) - **DEPRECATED** - Old interactivity metric (kept for backward compatibility)
+- **FID** (First Input Delay) - **REMOVED** - The CrUX API stopped returning `first_input_delay` on 2024-09-09. The four FID columns are retained (always empty) so existing sheets keep their column alignment.
 - **TTFB** (Time to First Byte) - Measures server response time
 - **RTT** (Round Trip Time) - Measures network latency
 
