@@ -23,6 +23,8 @@ const urls = ["https://example.com", "https://example.com/page"];
 const spreadsheetId = "your-spreadsheet-id-here";
 const apiKey = "your-api-key-here";
 const sheetTabName = "cruxData";
+// Accepted: "PHONE", "DESKTOP", "TABLET", and "ALL_FORM_FACTORS"
+// (ALL_FORM_FACTORS returns data aggregated across all form factors).
 const formFactor = ["PHONE", "DESKTOP", "ALL_FORM_FACTORS"];
 ```
 
@@ -122,7 +124,7 @@ Execution ID | Timestamp | URL | Form Factor | Status | Response Code | Error Me
 - **Execution ID**: Unique identifier for each script run (format: `exec_{timestamp}_{random}`)
 - **Timestamp**: Date and time of the request (dd-MM-yyyy HH:mm:ss)
 - **URL**: The URL that was requested
-- **Form Factor**: PHONE, DESKTOP, or ALL_FORM_FACTORS
+- **Form Factor**: PHONE, DESKTOP, TABLET, or ALL_FORM_FACTORS
 - **Status**: SUCCESS or FAILED
 - **Response Code**: HTTP status code from the API (200, 404, 500, etc.)
 - **Error Message**: Details if request failed, "-" otherwise
