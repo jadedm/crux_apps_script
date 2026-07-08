@@ -28,7 +28,7 @@ function runUnitTests() {
 function testConstructor() {
   TestFramework.describe("CruxExtractor Constructor", () => {
     TestFramework.it("should create instance with valid config", () => {
-      const extractor = new CruxExtractor({
+      const extractor = new CruxExtractor_({
         urls: ["https://example.com"],
         spreadsheetId: "test-sheet-id",
         apiKey: "test-api-key",
@@ -40,7 +40,7 @@ function testConstructor() {
     });
 
     TestFramework.it("should trim whitespace from inputs", () => {
-      const extractor = new CruxExtractor({
+      const extractor = new CruxExtractor_({
         urls: ["  https://example.com  "],
         spreadsheetId: "  test-sheet-id  ",
         apiKey: "  test-api-key  ",
@@ -53,7 +53,7 @@ function testConstructor() {
 
     TestFramework.it("should throw error if urls is not an array", () => {
       TestFramework.expect(() => {
-        new CruxExtractor({
+        new CruxExtractor_({
           urls: "not-an-array",
           spreadsheetId: "test-sheet-id",
           apiKey: "test-api-key",
@@ -63,7 +63,7 @@ function testConstructor() {
 
     TestFramework.it("should throw error if urls array is empty", () => {
       TestFramework.expect(() => {
-        new CruxExtractor({
+        new CruxExtractor_({
           urls: [],
           spreadsheetId: "test-sheet-id",
           apiKey: "test-api-key",
@@ -73,7 +73,7 @@ function testConstructor() {
 
     TestFramework.it("should throw error if urls contain non-strings", () => {
       TestFramework.expect(() => {
-        new CruxExtractor({
+        new CruxExtractor_({
           urls: ["https://example.com", 123, null],
           spreadsheetId: "test-sheet-id",
           apiKey: "test-api-key",
@@ -83,7 +83,7 @@ function testConstructor() {
 
     TestFramework.it("should throw error if urls contain empty strings", () => {
       TestFramework.expect(() => {
-        new CruxExtractor({
+        new CruxExtractor_({
           urls: ["https://example.com", "   "],
           spreadsheetId: "test-sheet-id",
           apiKey: "test-api-key",
@@ -93,7 +93,7 @@ function testConstructor() {
 
     TestFramework.it("should throw error if spreadsheetId is empty", () => {
       TestFramework.expect(() => {
-        new CruxExtractor({
+        new CruxExtractor_({
           urls: ["https://example.com"],
           spreadsheetId: "",
           apiKey: "test-api-key",
@@ -103,7 +103,7 @@ function testConstructor() {
 
     TestFramework.it("should throw error if apiKey is empty", () => {
       TestFramework.expect(() => {
-        new CruxExtractor({
+        new CruxExtractor_({
           urls: ["https://example.com"],
           spreadsheetId: "test-sheet-id",
           apiKey: "",
@@ -113,7 +113,7 @@ function testConstructor() {
 
     TestFramework.it("should throw error if formFactor is not array", () => {
       TestFramework.expect(() => {
-        new CruxExtractor({
+        new CruxExtractor_({
           urls: ["https://example.com"],
           spreadsheetId: "test-sheet-id",
           apiKey: "test-api-key",
@@ -123,7 +123,7 @@ function testConstructor() {
     });
 
     TestFramework.it("should use default values for optional params", () => {
-      const extractor = new CruxExtractor({
+      const extractor = new CruxExtractor_({
         urls: ["https://example.com"],
         spreadsheetId: "test-sheet-id",
         apiKey: "test-api-key",
@@ -141,7 +141,7 @@ function testConstructor() {
  */
 function testIsValidUrl() {
   TestFramework.describe("isValidUrl", () => {
-    const extractor = new CruxExtractor({
+    const extractor = new CruxExtractor_({
       urls: ["https://example.com"],
       spreadsheetId: "test-sheet-id",
       apiKey: "test-api-key",
@@ -194,7 +194,7 @@ function testBuildRequestUrls() {
     TestFramework.it(
       "should build requests for valid URLs and form factors",
       async () => {
-        const extractor = new CruxExtractor({
+        const extractor = new CruxExtractor_({
           urls: ["https://example.com", "https://test.com"],
           spreadsheetId: "test-sheet-id",
           apiKey: "test-api-key",
@@ -210,7 +210,7 @@ function testBuildRequestUrls() {
     );
 
     TestFramework.it("should skip invalid URLs", async () => {
-      const extractor = new CruxExtractor({
+      const extractor = new CruxExtractor_({
         urls: ["https://example.com", "invalid-url"],
         spreadsheetId: "test-sheet-id",
         apiKey: "test-api-key",
@@ -223,7 +223,7 @@ function testBuildRequestUrls() {
     });
 
     TestFramework.it("should skip invalid form factors", async () => {
-      const extractor = new CruxExtractor({
+      const extractor = new CruxExtractor_({
         urls: ["https://example.com"],
         spreadsheetId: "test-sheet-id",
         apiKey: "test-api-key",
@@ -238,7 +238,7 @@ function testBuildRequestUrls() {
     TestFramework.it(
       "should throw if no valid combinations exist",
       async () => {
-        const extractor = new CruxExtractor({
+        const extractor = new CruxExtractor_({
           urls: ["invalid-url"],
           spreadsheetId: "test-sheet-id",
           apiKey: "test-api-key",
@@ -256,7 +256,7 @@ function testBuildRequestUrls() {
     );
 
     TestFramework.it("should create proper payload structure", async () => {
-      const extractor = new CruxExtractor({
+      const extractor = new CruxExtractor_({
         urls: ["https://example.com"],
         spreadsheetId: "test-sheet-id",
         apiKey: "test-api-key",
@@ -273,7 +273,7 @@ function testBuildRequestUrls() {
     TestFramework.it(
       "should omit formFactor for ALL_FORM_FACTORS (CrUX aggregated request)",
       async () => {
-        const extractor = new CruxExtractor({
+        const extractor = new CruxExtractor_({
           urls: ["https://example.com"],
           spreadsheetId: "test-sheet-id",
           apiKey: "test-api-key",
@@ -291,7 +291,7 @@ function testBuildRequestUrls() {
     );
 
     TestFramework.it("should accept TABLET as a form factor", async () => {
-      const extractor = new CruxExtractor({
+      const extractor = new CruxExtractor_({
         urls: ["https://example.com"],
         spreadsheetId: "test-sheet-id",
         apiKey: "test-api-key",
@@ -320,7 +320,7 @@ function testFetchData() {
 
       TestMocks.setupGlobalMocks({ urlFetchResponses: responses });
 
-      const extractor = new CruxExtractor({
+      const extractor = new CruxExtractor_({
         urls: ["https://example.com"],
         spreadsheetId: "test-sheet-id",
         apiKey: "test-api-key",
@@ -345,7 +345,7 @@ function testFetchData() {
 
       TestMocks.setupGlobalMocks({ urlFetchResponses: responses });
 
-      const extractor = new CruxExtractor({
+      const extractor = new CruxExtractor_({
         urls: ["https://example.com"],
         spreadsheetId: "test-sheet-id",
         apiKey: "test-api-key",
@@ -363,7 +363,7 @@ function testFetchData() {
 
       TestMocks.setupGlobalMocks({ urlFetchResponses: responses });
 
-      const extractor = new CruxExtractor({
+      const extractor = new CruxExtractor_({
         urls: ["https://example.com"],
         spreadsheetId: "test-sheet-id",
         apiKey: "test-api-key",
@@ -379,7 +379,7 @@ function testFetchData() {
     TestFramework.it(
       "should throw if buildRequestUrls not called first",
       async () => {
-        const extractor = new CruxExtractor({
+        const extractor = new CruxExtractor_({
           urls: ["https://example.com"],
           spreadsheetId: "test-sheet-id",
           apiKey: "test-api-key",
@@ -404,7 +404,7 @@ function testFetchData() {
 function testNormalizeData() {
   TestFramework.describe("normalizeData", () => {
     TestFramework.it("should normalize data successfully", async () => {
-      const extractor = new CruxExtractor({
+      const extractor = new CruxExtractor_({
         urls: ["https://example.com"],
         spreadsheetId: "test-sheet-id",
         apiKey: "test-api-key",
@@ -448,7 +448,7 @@ function testNormalizeData() {
 
         TestMocks.setupGlobalMocks({ urlFetchResponses: [aggregatedResponse] });
 
-        const extractor = new CruxExtractor({
+        const extractor = new CruxExtractor_({
           urls: ["https://example.com"],
           spreadsheetId: "test-sheet-id",
           apiKey: "test-api-key",
@@ -470,7 +470,7 @@ function testNormalizeData() {
     );
 
     TestFramework.it("should handle missing metrics gracefully", async () => {
-      const extractor = new CruxExtractor({
+      const extractor = new CruxExtractor_({
         urls: ["https://example.com"],
         spreadsheetId: "test-sheet-id",
         apiKey: "test-api-key",
@@ -493,7 +493,7 @@ function testNormalizeData() {
     });
 
     TestFramework.it("should skip invalid responses", async () => {
-      const extractor = new CruxExtractor({
+      const extractor = new CruxExtractor_({
         urls: ["https://example.com"],
         spreadsheetId: "test-sheet-id",
         apiKey: "test-api-key",
@@ -510,7 +510,7 @@ function testNormalizeData() {
     });
 
     TestFramework.it("should throw if no filteredResponse exists", async () => {
-      const extractor = new CruxExtractor({
+      const extractor = new CruxExtractor_({
         urls: ["https://example.com"],
         spreadsheetId: "test-sheet-id",
         apiKey: "test-api-key",
@@ -527,7 +527,7 @@ function testNormalizeData() {
     TestFramework.it(
       "should throw if all responses fail normalization",
       async () => {
-        const extractor = new CruxExtractor({
+        const extractor = new CruxExtractor_({
           urls: ["https://example.com"],
           spreadsheetId: "test-sheet-id",
           apiKey: "test-api-key",
@@ -556,7 +556,7 @@ function testAddToSpreadsheet() {
     TestFramework.it("should write data to new sheet", async () => {
       TestMocks.setupGlobalMocks({ sheetExists: false });
 
-      const extractor = new CruxExtractor({
+      const extractor = new CruxExtractor_({
         urls: ["https://example.com"],
         spreadsheetId: "test-sheet-id",
         apiKey: "test-api-key",
@@ -573,7 +573,7 @@ function testAddToSpreadsheet() {
     TestFramework.it("should write data to existing sheet", async () => {
       TestMocks.setupGlobalMocks({ sheetExists: true });
 
-      const extractor = new CruxExtractor({
+      const extractor = new CruxExtractor_({
         urls: ["https://example.com"],
         spreadsheetId: "test-sheet-id",
         apiKey: "test-api-key",
@@ -589,7 +589,7 @@ function testAddToSpreadsheet() {
     TestFramework.it(
       "should throw if no normalizedResponse exists",
       async () => {
-        const extractor = new CruxExtractor({
+        const extractor = new CruxExtractor_({
           urls: ["https://example.com"],
           spreadsheetId: "test-sheet-id",
           apiKey: "test-api-key",
@@ -623,7 +623,7 @@ function testRun() {
           sheetExists: false,
         });
 
-        const extractor = new CruxExtractor({
+        const extractor = new CruxExtractor_({
           urls: ["https://example.com"],
           spreadsheetId: "test-sheet-id",
           apiKey: "test-api-key",
@@ -650,7 +650,7 @@ function testRun() {
         sheetExists: false,
       });
 
-      const extractor = new CruxExtractor({
+      const extractor = new CruxExtractor_({
         urls: ["https://example.com"],
         spreadsheetId: "test-sheet-id",
         apiKey: "test-api-key",
@@ -670,7 +670,7 @@ function testRun() {
         sheetExists: false,
       });
 
-      const extractor = new CruxExtractor({
+      const extractor = new CruxExtractor_({
         urls: ["https://example.com"],
         spreadsheetId: "test-sheet-id",
         apiKey: "test-api-key",
@@ -693,7 +693,7 @@ function testGetExecutionHistorySheet() {
     TestFramework.it("should create history sheet if it doesn't exist", () => {
       TestMocks.setupGlobalMocks({ sheetExists: false });
 
-      const extractor = new CruxExtractor({
+      const extractor = new CruxExtractor_({
         urls: ["https://example.com"],
         spreadsheetId: "test-sheet-id",
         apiKey: "test-api-key",
@@ -710,7 +710,7 @@ function testGetExecutionHistorySheet() {
       () => {
         TestMocks.setupGlobalMocks({ sheetExists: true });
 
-        const extractor = new CruxExtractor({
+        const extractor = new CruxExtractor_({
           urls: ["https://example.com"],
           spreadsheetId: "test-sheet-id",
           apiKey: "test-api-key",
@@ -728,7 +728,7 @@ function testGetExecutionHistorySheet() {
       () => {
         TestMocks.setupGlobalMocks({ sheetExists: false });
 
-        const extractor = new CruxExtractor({
+        const extractor = new CruxExtractor_({
           urls: ["https://example.com"],
           spreadsheetId: "test-sheet-id",
           apiKey: "test-api-key",
@@ -758,7 +758,7 @@ function testLogExecutionHistory() {
     TestFramework.it("should log execution records successfully", () => {
       TestMocks.setupGlobalMocks({ sheetExists: false });
 
-      const extractor = new CruxExtractor({
+      const extractor = new CruxExtractor_({
         urls: ["https://example.com"],
         spreadsheetId: "test-sheet-id",
         apiKey: "test-api-key",
@@ -794,7 +794,7 @@ function testLogExecutionHistory() {
     TestFramework.it("should handle empty records array", () => {
       TestMocks.setupGlobalMocks({ sheetExists: false });
 
-      const extractor = new CruxExtractor({
+      const extractor = new CruxExtractor_({
         urls: ["https://example.com"],
         spreadsheetId: "test-sheet-id",
         apiKey: "test-api-key",
@@ -811,7 +811,7 @@ function testLogExecutionHistory() {
     TestFramework.it("should handle records with missing fields", () => {
       TestMocks.setupGlobalMocks({ sheetExists: false });
 
-      const extractor = new CruxExtractor({
+      const extractor = new CruxExtractor_({
         urls: ["https://example.com"],
         spreadsheetId: "test-sheet-id",
         apiKey: "test-api-key",
@@ -840,7 +840,7 @@ function testLogExecutionHistory() {
     TestFramework.it("should append to existing history records", () => {
       TestMocks.setupGlobalMocks({ sheetExists: true });
 
-      const extractor = new CruxExtractor({
+      const extractor = new CruxExtractor_({
         urls: ["https://example.com"],
         spreadsheetId: "test-sheet-id",
         apiKey: "test-api-key",
