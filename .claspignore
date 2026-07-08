@@ -1,0 +1,5 @@
+# Publishing src/ as the Apps Script LIBRARY (clasp create --rootDir src).
+# Ship only index.js (plus the clasp-generated appsscript.json manifest).
+# main.partial.js is the copy-paste entry point and is NOT part of the
+# library surface, so keep it out of the deployed library.
+main.partial.js
