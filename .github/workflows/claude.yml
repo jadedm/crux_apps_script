@@ -1,0 +1,98 @@
+name: Claude Code
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review, reopened]
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+
+jobs:
+  claude:
+    if: >
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'issue_comment' &&
+       github.event.issue.pull_request &&
+       contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review_comment' &&
+       contains(github.event.comment.body, '@claude'))
+    runs-on: ubuntu-latest
+    concurrency:
+      group: claude-review-${{ github.event.pull_request.number || github.event.issue.number }}
+      cancel-in-progress: true
+    permissions:
+      actions: read
+      contents: read
+      pull-requests: write
+      issues: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: anthropics/claude-code-action@v1
+        id: claude-review
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          track_progress: true
+          include_fix_links: true
+          classify_inline_comments: true
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            Review this pull request thoroughly. Read README.md for project
+            conventions before reviewing.
+
+            ## Project
+
+            A Google Apps Script tool that pulls Chrome UX Report (CrUX) Core Web
+            Vitals data into Google Sheets. It runs in Google's Apps Script V8
+            runtime, NOT Node.js. Two source files: `index.js` (the extractor)
+            and `create-dashboard.js` (chart generation). Tests live in `tests/`.
+
+            ## Environment constraints (flag violations)
+
+            - This is Apps Script, not Node. Only Apps Script services exist:
+              UrlFetchApp, SpreadsheetApp, Logger, Utilities, Session,
+              PropertiesService. There is NO npm, no `require`/`import`, no
+              Node/browser globals (fetch, process, window, setTimeout).
+            - It must stay dual-use: runnable both copy-pasted into an Apps
+              Script project AND added as an Apps Script library. Only top-level
+              FUNCTION declarations are exposed to library consumers; top-level
+              `class`/`const`/`let` are NOT. Internal-only symbols use a trailing
+              underscore (e.g. `CruxExtractor_`) to stay private in a library.
+              Flag anything that would break either mode.
+
+            ## CrUX API correctness (high-value, easy to get wrong)
+
+            - `formFactor` accepts only PHONE, DESKTOP, TABLET. To get data
+              aggregated across all form factors the field must be OMITTED — there
+              is no ALL_FORM_FACTORS API value (sending it returns HTTP 400).
+            - `first_input_delay` (FID) was REMOVED from the API on 2024-09-09; it
+              is never returned. Don't reintroduce it as if it were live data.
+            - Endpoint is `records:queryRecord`. When no `metrics` array is sent,
+              the API returns all available metrics.
+
+            ## Review focus
+
+            - Correctness: API request shape, response parsing, null-safety
+              (missing metrics default to "-"), off-by-one in column indexing,
+              the 31-column schema staying aligned with the headers.
+            - Rate limiting: sequential requests with the ~400ms sleep between
+              calls is intentional — don't suggest fetchAll/parallelism.
+            - Resilience: non-200 and JSON-parse failures must be logged, skipped,
+              and recorded in the executionHistory audit sheet, never crash the run.
+            - Secrets: no hardcoded API keys; recommend PropertiesService.
+            - Style: match surrounding code; JSDoc on public functions; no
+              emojis or em-dashes in code or docs (house style).
+
+            ## Output format
+
+            - Rate findings by severity: critical, high, medium, minor.
+            - Include file paths and line numbers; use inline comments for
+              specific code issues.
+            - End with a short "What's Well Done" section.
+            - Be concise; skip trivial or obvious observations.
