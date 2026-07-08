@@ -289,6 +289,21 @@ function testBuildRequestUrls() {
         TestFramework.expect("formFactor" in payload).toBe(false);
       }
     );
+
+    TestFramework.it("should accept TABLET as a form factor", async () => {
+      const extractor = new CruxExtractor({
+        urls: ["https://example.com"],
+        spreadsheetId: "test-sheet-id",
+        apiKey: "test-api-key",
+        formFactor: ["TABLET"],
+      });
+
+      const requests = await extractor.buildRequestUrls();
+      const payload = JSON.parse(requests[0].payload);
+
+      TestFramework.expect(requests.length).toBe(1);
+      TestFramework.expect(payload.formFactor).toBe("TABLET");
+    });
   });
 }
 
