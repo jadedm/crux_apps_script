@@ -153,14 +153,22 @@ class CruxExtractor {
             continue;
           }
 
+          // The CrUX API accepts the formFactor values PHONE, DESKTOP, and
+          // TABLET. To get data aggregated across all form factors the field
+          // must be OMITTED entirely — there is no ALL_FORM_FACTORS enum, and
+          // sending it returns HTTP 400 "Invalid value". We keep
+          // "ALL_FORM_FACTORS" as the config token for that intent and
+          // translate it to an omitted field here.
+          const requestBody = { url: currentUrl };
+          if (factor !== "ALL_FORM_FACTORS") {
+            requestBody.formFactor = factor;
+          }
+
           this.requests.push({
             method: "post",
             muteHttpExceptions: true,
             contentType: "application/json",
-            payload: JSON.stringify({
-              url: currentUrl,
-              formFactor: factor,
-            }),
+            payload: JSON.stringify(requestBody),
           });
         }
       }
