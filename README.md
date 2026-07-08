@@ -50,7 +50,11 @@ const apiKey =
 
 ### As a library
 
-1. In your own Apps Script project, add this project by its Script ID (Project Settings > Script ID) under **Libraries**, with an identifier such as `Crux`. (Deploy `src/index.js` as the library; do not include `main()`.)
+1. In your own Apps Script project, open **Libraries**, paste the Script ID below, look it up, pick a version, and set the identifier to `Crux`:
+
+   ```
+   1EvW_5vsMBlFpt2fP0xyTmXnxV6PCbcGAd9S8UCIQMNmCCpQY15eRrH7v
+   ```
 2. Call `extract` through the identifier, from your own entry function:
 
 ```javascript
