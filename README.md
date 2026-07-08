@@ -355,3 +355,9 @@ PropertiesService.getScriptProperties().setProperty("CRUX_API_KEY", "new-key");
 ✅ More secure than hardcoding
 
 **Note:** Script Properties are accessible to anyone who can edit the script. They provide obfuscation but not encryption.
+
+---
+
+**Built by [Manish Jadhav](https://manishj.com)**, engineer & technical consultant.
+
+Need something like this designed or built? [Inoltro](https://inoltro.ai) is my studio.
