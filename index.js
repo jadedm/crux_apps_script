@@ -226,7 +226,11 @@ class CruxExtractor {
 
         const payload = JSON.parse(this.requests[reqIndex].payload);
         const url = payload.url;
-        const formFactor = payload.formFactor;
+        // Canonical form-factor label. Aggregated requests omit the field, so
+        // fall back to "AGGREGATED" — the same label normalizeData() derives
+        // from the response (key.formFactor || "AGGREGATED"). Keeping both
+        // sides consistent is what lets the normalized flag reconcile.
+        const formFactor = payload.formFactor || "AGGREGATED";
 
         let statusCode;
         let errorMessage = "-";
