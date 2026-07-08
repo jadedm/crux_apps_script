@@ -421,6 +421,11 @@ PropertiesService.getScriptProperties().setProperty("CRUX_API_KEY", "new-key");
 
 ---
 
-**Built by [Manish Jadhav](https://manishj.com)**, engineer & technical consultant.
+**Related reading.** Two posts that use this tool as their worked example:
+
+- [Track Core Web Vitals in a Google Sheet, without BigQuery](https://manishj.com/garden/track-core-web-vitals-google-sheet-without-bigquery)
+- [One source, two artifacts: shipping an Apps Script tool as copy-paste and a library](https://manishj.com/garden/one-source-two-artifacts-apps-script-library)
+
+**Built by [Manish Jadhav](https://manishj.com)**, engineer and founder of Inoltro Digital.
 
 Need something like this designed or built? [Inoltro](https://inoltro.ai) is my studio.
