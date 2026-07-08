@@ -39,7 +39,7 @@ async function main() {
 }
 ```
 
-5. Run `main` from the editor, or bind a time-based trigger to it. `main()` takes a `LockService` lock so a trigger double-fire can't append duplicate rows.
+5. Run `main` from the editor, or bind a time-based trigger to it. `main()` takes a `LockService` lock so a **concurrent** trigger double-fire is skipped rather than appending duplicate rows. (It does not dedupe a sequential re-run; see [Duplicate Trigger Execution](#duplicate-trigger-execution).)
 
 **Security Note**: For production, read the API key from Script Properties instead of hardcoding it:
 
@@ -99,7 +99,7 @@ Non-200 responses are logged and skipped. Failed URLs won't stop execution but w
 
 ### Duplicate Trigger Execution
 
-Apps Script time-based triggers can occasionally fire twice. In the copy-paste build, `main()` takes a `LockService` lock (`tryLock(0)`) and skips the run if another execution already holds it, so a double-fire can't append duplicate rows. Library consumers should add the same guard in their own entry function.
+Apps Script time-based triggers can occasionally fire twice. In the copy-paste build, `main()` takes a `LockService` lock (`tryLock(0)`) and skips the run if another execution already holds it, so a **concurrent** double-fire won't append duplicate rows. This does **not** cover a **sequential** re-fire (a second run that starts after the first finishes and releases the lock) — for that, dedupe by date before writing, or accept the rare duplicate. Library consumers should add the same guard in their own entry function.
 
 ## Output Schema
 
@@ -292,19 +292,30 @@ Update your entry function to read the API key:
 
 ```javascript
 async function main() {
-  const apiKey =
-    PropertiesService.getScriptProperties().getProperty("CRUX_API_KEY");
-  if (!apiKey) {
-    throw new Error("API key not found. Run setupApiKey() first.");
+  // Same LockService guard as the default main() (see Duplicate Trigger Execution).
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(0)) {
+    Logger.log("Crux Extractor:: Another execution holds the lock; exiting");
+    return;
   }
 
-  return await extract({
-    urls: ["https://example.com"], // Add your URLs
-    spreadsheetId: "YOUR_SPREADSHEET_ID", // Add your spreadsheet ID
-    apiKey, // Uses the retrieved value
-    formFactor: ["PHONE", "DESKTOP", "ALL_FORM_FACTORS"],
-    sheetTabName: "cruxData",
-  });
+  try {
+    const apiKey =
+      PropertiesService.getScriptProperties().getProperty("CRUX_API_KEY");
+    if (!apiKey) {
+      throw new Error("API key not found. Run setupApiKey() first.");
+    }
+
+    return await extract({
+      urls: ["https://example.com"], // Add your URLs
+      spreadsheetId: "YOUR_SPREADSHEET_ID", // Add your spreadsheet ID
+      apiKey, // Uses the retrieved value
+      formFactor: ["PHONE", "DESKTOP", "ALL_FORM_FACTORS"],
+      sheetTabName: "cruxData",
+    });
+  } finally {
+    lock.releaseLock();
+  }
 }
 ```
 
