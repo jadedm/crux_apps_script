@@ -17,6 +17,21 @@ One source of truth (`src/`) produces two artifacts:
 
 `dist/standalone.js` is generated (`node build.js`) from `src/index.js` + `src/main.partial.js` — do not edit it directly. See [Development](#development).
 
+### Configuration
+
+Both modes call the same `extract(config)`. The config object:
+
+| Field | Required | Type | Default | Notes |
+| --- | --- | --- | --- | --- |
+| `urls` | yes | `string[]` | — | URLs to fetch CrUX data for |
+| `spreadsheetId` | yes | `string` | — | Target Google Sheets ID (the long id in the sheet URL) |
+| `apiKey` | yes | `string` | — | Google API key with [CrUX API](https://developer.chrome.com/docs/crux/api) access |
+| `formFactor` | no | `string[]` | `["PHONE","DESKTOP","ALL_FORM_FACTORS"]` | Any of `PHONE`, `DESKTOP`, `TABLET`, `ALL_FORM_FACTORS` (aggregated across all form factors) |
+| `sheetTabName` | no | `string` | `"cruxData"` | Target tab; created with headers if missing |
+| `cruxUrl` | no | `string` | `records:queryRecord` endpoint | Advanced; override only to target a different endpoint |
+
+`extract()` returns a summary — `{ executionId, totalRequests, successfulResponses, rowsWritten, failedRequests }` — and throws if `config` is missing or a required field is empty. Every run also appends one audit row per request to the `executionHistory` tab.
+
 ### Copy-paste
 
 1. Create a new Google Apps Script project (V8 runtime is default).
@@ -55,20 +70,37 @@ const apiKey =
    ```
    1EvW_5vsMBlFpt2fP0xyTmXnxV6PCbcGAd9S8UCIQMNmCCpQY15eRrH7v
    ```
-2. Call `extract` through the identifier, from your own entry function:
+2. Call `extract` through the identifier from your own entry function. A complete, production-ready entry (Script Properties for the key, `LockService` guard, `async`/`await` so the lock releases only after the run finishes):
 
 ```javascript
-function run() {
-  return Crux.extract({
-    urls: ["https://example.com"],
-    spreadsheetId: "your-spreadsheet-id-here",
-    apiKey: "your-api-key-here",
-    formFactor: ["PHONE", "DESKTOP", "ALL_FORM_FACTORS"],
-  });
+async function run() {
+  // Skip a concurrent trigger double-fire instead of writing duplicate rows.
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(0)) return;
+
+  try {
+    return await Crux.extract({
+      urls: ["https://example.com", "https://example.com/pricing"],
+      spreadsheetId: "your-spreadsheet-id-here",
+      // Store the key in Script Properties, not in code.
+      apiKey:
+        PropertiesService.getScriptProperties().getProperty("CRUX_API_KEY"),
+      formFactor: ["PHONE", "DESKTOP", "ALL_FORM_FACTORS"],
+      sheetTabName: "cruxData",
+    });
+  } finally {
+    lock.releaseLock();
+  }
 }
 ```
 
-Only the top-level `extract()` function is exposed; `CruxExtractor_` is private. Library code runs under **your** project's authorization, so it authorizes the `UrlFetchApp` and `SpreadsheetApp` scopes on first run. Pin a library version for stability. If trigger double-fires are a concern, add your own `LockService` guard in `run()` (as `main()` does in the copy-paste build).
+Bind a time-based trigger to `run` for automated collection. A minimal call is just `Crux.extract({ urls, spreadsheetId, apiKey })` — see [Configuration](#configuration) for all fields.
+
+Notes:
+- Only the top-level `extract()` is exposed; `CruxExtractor_` is private.
+- Library code runs under **your** project's authorization, so it authorizes the `UrlFetchApp` and `SpreadsheetApp` scopes on first run.
+- **Pin a version** — you choose a specific library version when adding it; bump it when this library releases a new version.
+- The `LockService` guard covers a concurrent double-fire, not a sequential re-run (see [Duplicate Trigger Execution](#duplicate-trigger-execution)).
 
 #### Publishing (maintainer)
 
