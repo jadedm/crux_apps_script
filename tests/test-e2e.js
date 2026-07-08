@@ -35,7 +35,7 @@ function testCompleteDataExtractionFlow() {
         sheetExists: false,
       });
 
-      const extractor = new CruxExtractor({
+      const extractor = new CruxExtractor_({
         urls: ["https://example.com", "https://test.com"],
         spreadsheetId: "test-sheet-id",
         apiKey: "test-api-key",
@@ -57,7 +57,7 @@ function testCompleteDataExtractionFlow() {
         sheetExists: false,
       });
 
-      const extractor = new CruxExtractor({
+      const extractor = new CruxExtractor_({
         urls: ["https://example.com"],
         spreadsheetId: "test-sheet-id",
         apiKey: "test-api-key",
@@ -84,7 +84,7 @@ function testCompleteDataExtractionFlow() {
         sheetExists: true,
       });
 
-      const extractor = new CruxExtractor({
+      const extractor = new CruxExtractor_({
         urls: ["https://example.com"],
         spreadsheetId: "test-sheet-id",
         apiKey: "test-api-key",
@@ -114,7 +114,7 @@ function testErrorRecovery() {
         sheetExists: false,
       });
 
-      const extractor = new CruxExtractor({
+      const extractor = new CruxExtractor_({
         urls: ["https://example.com"],
         spreadsheetId: "test-sheet-id",
         apiKey: "test-api-key",
@@ -141,7 +141,7 @@ function testErrorRecovery() {
         sheetExists: false,
       });
 
-      const extractor = new CruxExtractor({
+      const extractor = new CruxExtractor_({
         urls: ["https://example.com"],
         spreadsheetId: "test-sheet-id",
         apiKey: "test-api-key",
@@ -168,7 +168,7 @@ function testErrorRecovery() {
         sheetExists: false,
       });
 
-      const extractor = new CruxExtractor({
+      const extractor = new CruxExtractor_({
         urls: ["https://example.com"],
         spreadsheetId: "test-sheet-id",
         apiKey: "test-api-key",
@@ -200,7 +200,7 @@ function testPartialFailures() {
         sheetExists: false,
       });
 
-      const extractor = new CruxExtractor({
+      const extractor = new CruxExtractor_({
         urls: ["https://example.com", "invalid-url"],
         spreadsheetId: "test-sheet-id",
         apiKey: "test-api-key",
@@ -225,7 +225,7 @@ function testPartialFailures() {
         sheetExists: false,
       });
 
-      const extractor = new CruxExtractor({
+      const extractor = new CruxExtractor_({
         urls: ["https://example.com"],
         spreadsheetId: "test-sheet-id",
         apiKey: "test-api-key",
@@ -253,7 +253,7 @@ function testPartialFailures() {
         sheetExists: false,
       });
 
-      const extractor = new CruxExtractor({
+      const extractor = new CruxExtractor_({
         urls: ["https://example.com"],
         spreadsheetId: "test-sheet-id",
         apiKey: "test-api-key",
@@ -285,7 +285,7 @@ function testEdgeCases() {
         sheetExists: false,
       });
 
-      const extractor = new CruxExtractor({
+      const extractor = new CruxExtractor_({
         urls: ["https://example.com"],
         spreadsheetId: "test-sheet-id",
         apiKey: "test-api-key",
@@ -305,7 +305,7 @@ function testEdgeCases() {
         sheetExists: false,
       });
 
-      const extractor = new CruxExtractor({
+      const extractor = new CruxExtractor_({
         urls: ["https://example.com/"],
         spreadsheetId: "test-sheet-id",
         apiKey: "test-api-key",
@@ -324,7 +324,7 @@ function testEdgeCases() {
         sheetExists: false,
       });
 
-      const extractor = new CruxExtractor({
+      const extractor = new CruxExtractor_({
         urls: ["https://example.com?param=value"],
         spreadsheetId: "test-sheet-id",
         apiKey: "test-api-key",
@@ -357,7 +357,7 @@ function testEdgeCases() {
         sheetExists: false,
       });
 
-      const extractor = new CruxExtractor({
+      const extractor = new CruxExtractor_({
         urls: ["https://example.com"],
         spreadsheetId: "test-sheet-id",
         apiKey: "test-api-key",
@@ -405,7 +405,7 @@ function testEdgeCases() {
         sheetExists: false,
       });
 
-      const extractor = new CruxExtractor({
+      const extractor = new CruxExtractor_({
         urls: ["https://example.com"],
         spreadsheetId: "test-sheet-id",
         apiKey: "test-api-key",

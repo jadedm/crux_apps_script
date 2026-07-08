@@ -121,7 +121,7 @@ function runSmokeTest() {
 
   TestFramework.describe("Smoke Test", () => {
     TestFramework.it("should create extractor and run basic flow", async () => {
-      const extractor = new CruxExtractor({
+      const extractor = new CruxExtractor_({
         urls: ["https://example.com"],
         spreadsheetId: "test-id",
         apiKey: "test-key",
@@ -150,7 +150,7 @@ function runPerformanceTest() {
     sheetExists: false,
   });
 
-  const extractor = new CruxExtractor({
+  const extractor = new CruxExtractor_({
     urls: [
       "https://example1.com",
       "https://example2.com",
