@@ -37,7 +37,7 @@ function createCruxDashboard() {
     // Add title
     dashboardSheet
       .getRange("A1")
-      .setValue("📊 Core Web Vitals Dashboard")
+      .setValue("Core Web Vitals Dashboard")
       .setFontSize(20)
       .setFontWeight("bold");
 
@@ -197,7 +197,7 @@ function createSummaryStats(dashboardSheet, dataSheet, lastRow) {
     // Add summary section
     dashboardSheet
       .getRange("A54")
-      .setValue("📈 Summary Statistics")
+      .setValue("Summary Statistics")
       .setFontSize(14)
       .setFontWeight("bold");
 
@@ -218,7 +218,7 @@ function createSummaryStats(dashboardSheet, dataSheet, lastRow) {
           "LCP",
           lcpGoodAvg,
           lcpP75Avg,
-          '=IF(B57>0.75,"✅ Good",IF(B57>0.5,"⚠️ Needs Work","❌ Poor"))',
+          '=IF(B57>0.75,"Good",IF(B57>0.5,"Needs Work","Poor"))',
         ],
       ]);
 
@@ -234,7 +234,7 @@ function createSummaryStats(dashboardSheet, dataSheet, lastRow) {
           "INP",
           inpGoodAvg,
           inpP75Avg,
-          '=IF(B58>0.75,"✅ Good",IF(B58>0.5,"⚠️ Needs Work","❌ Poor"))',
+          '=IF(B58>0.75,"Good",IF(B58>0.5,"Needs Work","Poor"))',
         ],
       ]);
 
@@ -250,7 +250,7 @@ function createSummaryStats(dashboardSheet, dataSheet, lastRow) {
           "CLS",
           clsGoodAvg,
           clsP75Avg,
-          '=IF(B59>0.75,"✅ Good",IF(B59>0.5,"⚠️ Needs Work","❌ Poor"))',
+          '=IF(B59>0.75,"Good",IF(B59>0.5,"Needs Work","Poor"))',
         ],
       ]);
 
@@ -266,7 +266,7 @@ function createSummaryStats(dashboardSheet, dataSheet, lastRow) {
           "FCP",
           fcpGoodAvg,
           fcpP75Avg,
-          '=IF(B60>0.75,"✅ Good",IF(B60>0.5,"⚠️ Needs Work","❌ Poor"))',
+          '=IF(B60>0.75,"Good",IF(B60>0.5,"Needs Work","Poor"))',
         ],
       ]);
 

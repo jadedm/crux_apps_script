@@ -203,7 +203,7 @@ function testBuildRequestUrls() {
 
         const requests = await extractor.buildRequestUrls();
 
-        TestFramework.expect(requests.length).toBe(4); // 2 URLs × 2 form factors
+        TestFramework.expect(requests.length).toBe(4); // 2 URLs x 2 form factors
         TestFramework.expect(requests[0].method).toBe("post");
         TestFramework.expect(requests[0].contentType).toBe("application/json");
       }
