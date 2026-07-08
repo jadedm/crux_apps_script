@@ -428,9 +428,15 @@ class CruxExtractor_ {
       let sheet = spreadsheet.getSheetByName(this.sheetTabName);
 
       if (!sheet) {
-        Logger.log("Crux Extractor:: Creating new sheet and adding headers");
+        Logger.log("Crux Extractor:: Creating new sheet");
         sheet = spreadsheet.insertSheet(this.sheetTabName);
+      }
 
+      // Write headers when the sheet has no rows yet - either freshly created
+      // or a pre-existing empty tab. Without this, data would be written at
+      // row 1 with no column labels.
+      if (sheet.getLastRow() === 0) {
+        Logger.log("Crux Extractor:: Adding headers");
         const headers = [
           "Date",
           "Platform",
@@ -517,13 +523,17 @@ class CruxExtractor_ {
       );
 
       if (!historySheet) {
-        Logger.log(
-          "Crux Extractor:: Creating execution history sheet with headers"
-        );
+        Logger.log("Crux Extractor:: Creating execution history sheet");
         historySheet = spreadsheet.insertSheet(
           CruxExtractor_.CONFIG.HISTORY_SHEET_NAME
         );
+      }
 
+      // Write headers when the sheet has no rows yet - either freshly created
+      // or a pre-existing empty tab - so records are never written above the
+      // header row.
+      if (historySheet.getLastRow() === 0) {
+        Logger.log("Crux Extractor:: Adding execution history headers");
         const headers = [
           "Execution ID",
           "Timestamp",

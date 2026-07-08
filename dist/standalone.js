@@ -432,9 +432,15 @@ class CruxExtractor_ {
       let sheet = spreadsheet.getSheetByName(this.sheetTabName);
 
       if (!sheet) {
-        Logger.log("Crux Extractor:: Creating new sheet and adding headers");
+        Logger.log("Crux Extractor:: Creating new sheet");
         sheet = spreadsheet.insertSheet(this.sheetTabName);
+      }
 
+      // Write headers when the sheet has no rows yet - either freshly created
+      // or a pre-existing empty tab. Without this, data would be written at
+      // row 1 with no column labels.
+      if (sheet.getLastRow() === 0) {
+        Logger.log("Crux Extractor:: Adding headers");
         const headers = [
           "Date",
           "Platform",
@@ -521,13 +527,17 @@ class CruxExtractor_ {
       );
 
       if (!historySheet) {
-        Logger.log(
-          "Crux Extractor:: Creating execution history sheet with headers"
-        );
+        Logger.log("Crux Extractor:: Creating execution history sheet");
         historySheet = spreadsheet.insertSheet(
           CruxExtractor_.CONFIG.HISTORY_SHEET_NAME
         );
+      }
 
+      // Write headers when the sheet has no rows yet - either freshly created
+      // or a pre-existing empty tab - so records are never written above the
+      // header row.
+      if (historySheet.getLastRow() === 0) {
+        Logger.log("Crux Extractor:: Adding execution history headers");
         const headers = [
           "Execution ID",
           "Timestamp",
@@ -747,9 +757,11 @@ function extract(config) {
  *   concurrent run already holds the lock.
  */
 async function main() {
-  // Guard against the known Apps Script trigger double-fire: if another
-  // invocation is already running, skip this one instead of appending
-  // duplicate rows. tryLock(0) returns immediately without waiting.
+  // Reduce the chance of duplicate rows from a CONCURRENT trigger double-fire:
+  // if another invocation is already running, skip this one. tryLock(0) returns
+  // immediately without waiting. Note this does not dedupe SEQUENTIAL re-runs
+  // (a second fire after the first finishes and releases the lock); for full
+  // idempotency, dedupe by date before writing.
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(0)) {
     Logger.log(
@@ -768,6 +780,14 @@ async function main() {
       formFactor: ["PHONE", "DESKTOP", "ALL_FORM_FACTORS"],
       sheetTabName: "cruxData",
     });
+  } catch (error) {
+    // Log before rethrowing so a failed trigger run leaves a diagnosable
+    // transcript (the async rejection alone may not surface details).
+    Logger.log("Crux Extractor:: Run failed: " + (error && error.message));
+    if (error && error.stack) {
+      Logger.log(error.stack);
+    }
+    throw error;
   } finally {
     lock.releaseLock();
   }
