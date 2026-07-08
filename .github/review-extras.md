@@ -1,20 +1,9 @@
 ## Repo-specific conventions
 
-This is a Google **Apps Script** tool (Chrome UX Report data into Google Sheets),
-not a Node project. Source: `index.js` (extractor) and `create-dashboard.js`
-(charts); tests in `tests/`. Read `README.md` for full context.
-
-### Environment (flag violations)
-
-- Runs in the Apps Script V8 runtime, NOT Node.js. Only Apps Script services
-  exist: `UrlFetchApp`, `SpreadsheetApp`, `Logger`, `Utilities`, `Session`,
-  `PropertiesService`. There is no npm, no `require`/`import`, and no Node or
-  browser globals (`fetch`, `process`, `window`, `setTimeout`).
-- Must stay **dual-use**: runnable both copy-pasted into an Apps Script project
-  and added as an Apps Script library. Only top-level **function declarations**
-  are exposed to library consumers; top-level `class`/`const`/`let` are not.
-  Internal-only symbols use a trailing underscore (e.g. `CruxExtractor_`) to
-  stay private in a library. Flag anything that would break either mode.
+Google Apps Script tool that pulls Chrome UX Report (CrUX) data into Google
+Sheets. Source: `index.js` (extractor) and `create-dashboard.js` (charts); tests
+in `tests/`. The general Apps Script conventions come from the `apps-script`
+stack prompt — the notes below are specific to this repo.
 
 ### CrUX API correctness (easy to get wrong)
 
@@ -30,8 +19,6 @@ not a Node project. Source: `index.js` (extractor) and `create-dashboard.js`
 
 ### Behaviour to preserve
 
-- Sequential requests with the ~400ms sleep between calls are intentional rate
-  limiting — do not suggest `fetchAll`/parallelism.
 - Non-200 and JSON-parse failures must be logged, skipped, and recorded in the
   `executionHistory` audit sheet — never crash the run. Missing metrics default
   to `"-"`.
@@ -40,5 +27,4 @@ not a Node project. Source: `index.js` (extractor) and `create-dashboard.js`
 
 ### Style
 
-- Match surrounding code; JSDoc on public functions.
 - No emojis or em-dashes in code or docs (house style).

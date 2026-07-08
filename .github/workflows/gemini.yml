@@ -12,9 +12,10 @@ permissions:
 
 jobs:
   review:
-    uses: jadedm/claude-review-action/.github/workflows/gemini-review.yml@v1
+    uses: jadedm/claude-review-action/.github/workflows/gemini-review.yml@v1.2.0
     with:
-      stack: base
+      stack: apps-script
+      ref: v1.2.0
       runner: '"ubuntu-latest"'
       slack_notify: false
       extra_prompt_path: .github/review-extras.md
