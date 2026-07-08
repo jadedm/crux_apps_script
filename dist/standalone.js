@@ -1,20 +1,23 @@
-/**
- * Global variable to prevent duplicate execution within the same Apps Script run.
- * This is a workaround for a known Apps Script timing bug where triggers sometimes fire twice.
- */
-let executionFlag = false;
+// GENERATED FILE - do not edit directly.
+// Source of truth: src/index.js (library) + src/main.partial.js (entry).
+// Regenerate with: node build.js
 
 /**
- * CruxExtractor - Extracts Chrome User Experience Report (CrUX) data and writes to Google Sheets.
+ * CruxExtractor_ - internal implementation. Extracts Chrome User Experience
+ * Report (CrUX) data and writes it to Google Sheets.
  *
  * Fetches Core Web Vitals metrics (LCP, INP, CLS, FCP) and additional metrics (FID, TTFB, RTT)
  * from the Chrome UX Report API for specified URLs and form factors, then appends the data
  * to a Google Sheets spreadsheet.
  *
+ * The trailing underscore keeps this class private when the project is used as
+ * an Apps Script library. Call the public `extract()` function instead of
+ * instantiating this directly.
+ *
  * Note: FID (First Input Delay) is deprecated as of March 2024 and replaced by INP (Interaction to Next Paint).
  * FID columns are kept for backward compatibility.
  */
-class CruxExtractor {
+class CruxExtractor_ {
   /**
    * Configuration constants for the CruxExtractor.
    * @type {Object}
@@ -37,7 +40,7 @@ class CruxExtractor {
   }
 
   /**
-   * Creates a new CruxExtractor instance.
+   * Creates a new CruxExtractor_ instance.
    *
    * @param {Object} config - Configuration object
    * @param {string[]} config.urls - Array of URLs to fetch CrUX data for
@@ -245,7 +248,7 @@ class CruxExtractor {
           statusCode = response.getResponseCode();
           Logger.log(`Crux Extractor:: Received status code: ${statusCode}`);
 
-          if (statusCode !== CruxExtractor.CONFIG.HTTP_STATUS_OK) {
+          if (statusCode !== CruxExtractor_.CONFIG.HTTP_STATUS_OK) {
             errorMessage = `Non-200 response: ${response.getContentText()}`;
             Logger.log(`Non-200 response for request ${reqIndex + 1}`);
             Logger.log(`Payload: ${this.requests[reqIndex].payload}`);
@@ -282,9 +285,9 @@ class CruxExtractor {
         });
 
         if (reqIndex < requestsLength - 1) {
-          Utilities.sleep(CruxExtractor.CONFIG.SLEEP_DURATION_MS);
+          Utilities.sleep(CruxExtractor_.CONFIG.SLEEP_DURATION_MS);
           Logger.log(
-            `Sleeping ${CruxExtractor.CONFIG.SLEEP_DURATION_MS}ms before next request`
+            `Sleeping ${CruxExtractor_.CONFIG.SLEEP_DURATION_MS}ms before next request`
           );
         }
       }
@@ -466,9 +469,9 @@ class CruxExtractor {
           "RTT (75th Percentile)",
         ];
 
-        if (headers.length !== CruxExtractor.CONFIG.COLUMN_COUNT) {
+        if (headers.length !== CruxExtractor_.CONFIG.COLUMN_COUNT) {
           Logger.log(
-            `Warning: Header count (${headers.length}) does not match CONFIG.COLUMN_COUNT (${CruxExtractor.CONFIG.COLUMN_COUNT})`
+            `Warning: Header count (${headers.length}) does not match CONFIG.COLUMN_COUNT (${CruxExtractor_.CONFIG.COLUMN_COUNT})`
           );
         }
 
@@ -478,9 +481,9 @@ class CruxExtractor {
       const numRows = this.normalizedResponse.length;
       const numCols = this.normalizedResponse[0].length;
 
-      if (numCols !== CruxExtractor.CONFIG.COLUMN_COUNT) {
+      if (numCols !== CruxExtractor_.CONFIG.COLUMN_COUNT) {
         Logger.log(
-          `Warning: Data columns (${numCols}) do not match expected (${CruxExtractor.CONFIG.COLUMN_COUNT})`
+          `Warning: Data columns (${numCols}) do not match expected (${CruxExtractor_.CONFIG.COLUMN_COUNT})`
         );
       }
 
@@ -514,7 +517,7 @@ class CruxExtractor {
       Logger.log("Crux Extractor:: Getting execution history sheet");
       const spreadsheet = SpreadsheetApp.openById(this.spreadsheetId);
       let historySheet = spreadsheet.getSheetByName(
-        CruxExtractor.CONFIG.HISTORY_SHEET_NAME
+        CruxExtractor_.CONFIG.HISTORY_SHEET_NAME
       );
 
       if (!historySheet) {
@@ -522,7 +525,7 @@ class CruxExtractor {
           "Crux Extractor:: Creating execution history sheet with headers"
         );
         historySheet = spreadsheet.insertSheet(
-          CruxExtractor.CONFIG.HISTORY_SHEET_NAME
+          CruxExtractor_.CONFIG.HISTORY_SHEET_NAME
         );
 
         const headers = [
@@ -536,9 +539,9 @@ class CruxExtractor {
           "Normalized",
         ];
 
-        if (headers.length !== CruxExtractor.CONFIG.HISTORY_COLUMN_COUNT) {
+        if (headers.length !== CruxExtractor_.CONFIG.HISTORY_COLUMN_COUNT) {
           Logger.log(
-            `Warning: History header count (${headers.length}) does not match CONFIG.HISTORY_COLUMN_COUNT (${CruxExtractor.CONFIG.HISTORY_COLUMN_COUNT})`
+            `Warning: History header count (${headers.length}) does not match CONFIG.HISTORY_COLUMN_COUNT (${CruxExtractor_.CONFIG.HISTORY_COLUMN_COUNT})`
           );
         }
 
@@ -605,7 +608,7 @@ class CruxExtractor {
           startRow,
           1,
           rows.length,
-          CruxExtractor.CONFIG.HISTORY_COLUMN_COUNT
+          CruxExtractor_.CONFIG.HISTORY_COLUMN_COUNT
         )
         .setValues(rows);
 
@@ -681,6 +684,9 @@ class CruxExtractor {
     } catch (error) {
       Logger.log("Crux Extractor:: Error occurred during execution");
       Logger.log(`Error details: ${error.message}`);
+      if (error.stack) {
+        Logger.log(error.stack);
+      }
 
       if (this.executionRecords && this.executionRecords.length > 0) {
         Logger.log("Logging partial execution history before throwing error");
@@ -699,74 +705,70 @@ class CruxExtractor {
 }
 
 /**
- * Main entry point for the CrUX data extraction script.
+ * Public entry point. Extracts CrUX data and writes it to a Google Sheet.
  *
- * Configures and executes the CruxExtractor to fetch Chrome UX Report data
- * and write it to Google Sheets. Uses executionFlag to prevent duplicate runs
- * within the same execution (Apps Script timing bug workaround).
+ * This is the single public function. It is exposed both when this file is
+ * copy-pasted into an Apps Script project and when the project is added as a
+ * library — call it as `Crux.extract(config)`, where `Crux` is the library
+ * identifier you chose. As a library, the code runs under the CONSUMER's
+ * authorization, so the consuming project must authorize the UrlFetchApp and
+ * SpreadsheetApp scopes on first run.
  *
- * Configuration Instructions:
- * - urls: Array of URLs to extract data for
- * - spreadsheetId: Google Sheets spreadsheet ID to write data to
- * - apiKey: Google API key with Chrome UX Report API access
- *   (See: https://developers.google.com/web/tools/chrome-user-experience-report/api/guides/getting-started)
- * - formFactor: Screen types to query (PHONE, DESKTOP, ALL_FORM_FACTORS)
- * - sheetTabName: Name of the sheet tab (will create if not present)
- *
- * @async
- * @returns {Promise<Object>} Execution summary or undefined if duplicate run detected
+ * @param {Object} config - Configuration object
+ * @param {string[]} config.urls - URLs to fetch CrUX data for
+ * @param {string} config.spreadsheetId - Target Google Sheets ID
+ * @param {string} config.apiKey - Google API key with CrUX API access
+ *   (See: https://developer.chrome.com/docs/crux/api)
+ * @param {string[]} [config.formFactor=["PHONE","DESKTOP","ALL_FORM_FACTORS"]]
+ *   - Form factors to query: PHONE, DESKTOP, TABLET, or ALL_FORM_FACTORS
+ *     (ALL_FORM_FACTORS returns data aggregated across all form factors)
+ * @param {string} [config.sheetTabName="cruxData"] - Target tab (created if missing)
+ * @returns {Promise<Object>} Execution summary
+ * @throws {Error} If config is missing or not an object
  */
-const main = async () => {
+function extract(config) {
+  if (!config || typeof config !== "object") {
+    throw new Error(
+      "Crux Extractor: extract(config) requires a configuration object"
+    );
+  }
+  return new CruxExtractor_(config).run();
+}
+
+/**
+ * Copy-paste entry point. Edit the config below and bind an Apps Script
+ * time-based trigger to this `main` function.
+ *
+ * This function is only present in the copy-paste build (dist/standalone.js);
+ * it is NOT part of the library surface. Library consumers call `extract()`
+ * directly and ignore this.
+ *
+ * @returns {Promise<Object>|undefined} Execution summary, or undefined if a
+ *   concurrent run already holds the lock.
+ */
+async function main() {
+  // Guard against the known Apps Script trigger double-fire: if another
+  // invocation is already running, skip this one instead of appending
+  // duplicate rows. tryLock(0) returns immediately without waiting.
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(0)) {
+    Logger.log(
+      "Crux Extractor:: Another execution holds the lock; exiting to avoid duplicate rows"
+    );
+    return;
+  }
+
   try {
-    Logger.log("Crux Extractor:: Starting script execution");
-
-    if (executionFlag) {
-      Logger.log("Duplicate execution detected, exiting");
-      return;
-    }
-
-    executionFlag = true;
-
-    const config = {
-      urls: [],
-      spreadsheetId: "",
-      apiKey: "",
+    return await extract({
+      urls: [], // Add your URLs
+      spreadsheetId: "", // Add your spreadsheet ID
+      apiKey: "", // Add your API key (or read it from PropertiesService)
+      // Accepted: "PHONE", "DESKTOP", "TABLET", "ALL_FORM_FACTORS"
+      // (ALL_FORM_FACTORS returns data aggregated across all form factors).
       formFactor: ["PHONE", "DESKTOP", "ALL_FORM_FACTORS"],
       sheetTabName: "cruxData",
-    };
-
-    if (!config.urls.length) {
-      throw new Error(
-        "Configuration error: 'urls' array is empty. Please add URLs to process."
-      );
-    }
-
-    if (!config.spreadsheetId) {
-      throw new Error(
-        "Configuration error: 'spreadsheetId' is required. Please add your spreadsheet ID."
-      );
-    }
-
-    if (!config.apiKey) {
-      throw new Error(
-        "Configuration error: 'apiKey' is required. Please add your API key."
-      );
-    }
-
-    Logger.log("Crux Extractor:: Initializing extractor");
-    const cruxExtractor = new CruxExtractor(config);
-
-    Logger.log("Crux Extractor:: Starting extraction");
-    const summary = await cruxExtractor.run();
-
-    Logger.log(`Script execution successful: ${JSON.stringify(summary)}`);
-    return summary;
-  } catch (error) {
-    Logger.log("Script execution failed");
-    Logger.log(error.message || error.toString());
-    if (error.stack) {
-      Logger.log(error.stack);
-    }
-    throw error;
+    });
+  } finally {
+    lock.releaseLock();
   }
-};
+}
