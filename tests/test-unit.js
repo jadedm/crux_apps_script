@@ -423,6 +423,52 @@ function testNormalizeData() {
       TestFramework.expect(normalized[0][2]).toBe("https://example.com"); // URL
     });
 
+    TestFramework.it(
+      "should mark aggregated (ALL_FORM_FACTORS) responses as normalized",
+      async () => {
+        // The aggregated record comes back with NO formFactor in its key, the
+        // way the CrUX API returns it. The execution record (built from the
+        // request, which omits formFactor) and the normalized row must both
+        // reconcile to "AGGREGATED" so the normalized flag flips to YES.
+        const aggregatedResponse = TestMocks.createMockResponse(200, {
+          record: {
+            key: { url: "https://example.com" },
+            metrics: {
+              largest_contentful_paint: {
+                histogram: [
+                  { density: 0.7 },
+                  { density: 0.2 },
+                  { density: 0.1 },
+                ],
+                percentiles: { p75: 2500 },
+              },
+            },
+          },
+        });
+
+        TestMocks.setupGlobalMocks({ urlFetchResponses: [aggregatedResponse] });
+
+        const extractor = new CruxExtractor({
+          urls: ["https://example.com"],
+          spreadsheetId: "test-sheet-id",
+          apiKey: "test-api-key",
+          formFactor: ["ALL_FORM_FACTORS"],
+        });
+
+        await extractor.buildRequestUrls();
+        await extractor.fetchData();
+        await extractor.normalizeData();
+
+        TestFramework.expect(extractor.executionRecords.length).toBe(1);
+        TestFramework.expect(extractor.executionRecords[0].formFactor).toBe(
+          "AGGREGATED"
+        );
+        TestFramework.expect(extractor.executionRecords[0].normalized).toBe(
+          "YES"
+        );
+      }
+    );
+
     TestFramework.it("should handle missing metrics gracefully", async () => {
       const extractor = new CruxExtractor({
         urls: ["https://example.com"],
