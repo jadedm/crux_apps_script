@@ -269,6 +269,26 @@ function testBuildRequestUrls() {
       TestFramework.expect(payload.url).toBe("https://example.com");
       TestFramework.expect(payload.formFactor).toBe("PHONE");
     });
+
+    TestFramework.it(
+      "should omit formFactor for ALL_FORM_FACTORS (CrUX aggregated request)",
+      async () => {
+        const extractor = new CruxExtractor({
+          urls: ["https://example.com"],
+          spreadsheetId: "test-sheet-id",
+          apiKey: "test-api-key",
+          formFactor: ["ALL_FORM_FACTORS"],
+        });
+
+        const requests = await extractor.buildRequestUrls();
+        const payload = JSON.parse(requests[0].payload);
+
+        TestFramework.expect(payload.url).toBe("https://example.com");
+        // The API has no ALL_FORM_FACTORS value; the field must be absent so
+        // the response is aggregated across all form factors.
+        TestFramework.expect("formFactor" in payload).toBe(false);
+      }
+    );
   });
 }
 
