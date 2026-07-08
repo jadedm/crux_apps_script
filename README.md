@@ -128,13 +128,12 @@ Execution ID | Timestamp | URL | Form Factor | Status | Response Code | Error Me
 - **Error Message**: Details if request failed, "-" otherwise
 - **Normalized**: YES if data was successfully normalized and written to main sheet, NO otherwise
 
-**Benefits:**
+**Uses:**
 
-- 📊 **Track all requests**: See every URL/form factor combination attempted
-- ❌ **Identify failures**: Quickly spot which URLs are failing and why
-- 🐛 **Debug issues**: View exact error messages and response codes
-- 📈 **Monitor trends**: Historical view of API reliability over time
-- 🔍 **Audit trail**: Complete record of all executions
+- Track every URL/form factor combination attempted
+- Identify which URLs are failing and why
+- View exact error messages and response codes
+- Historical view of API reliability over time
 
 **Example History Records:**
 
@@ -169,41 +168,40 @@ After extracting CrUX data, you can generate an automated dashboard with visuali
 
 ### Dashboard Includes:
 
-📊 **Core Web Vitals Score Distribution**
+**Core Web Vitals Score Distribution**
 - Stacked bar chart showing Good/Needs Improvement/Poor percentages
-- Visual breakdown of LCP, INP, CLS, FCP performance
+- Breakdown of LCP, INP, CLS, FCP performance
 - Color-coded: Green (Good), Orange (Needs Improvement), Red (Poor)
 
-📈 **P75 Values Comparison**
+**P75 Values Comparison**
 - Column chart comparing 75th percentile values across URLs
 - Lower values are better (except for Good percentages)
 - Shows LCP, INP, FCP P75 values in milliseconds
 
-📱 **Form Factor Comparison**
+**Form Factor Comparison**
 - Compares performance across PHONE, DESKTOP, AGGREGATED
 - Shows "Good" score percentages for each metric
-- Helps identify which device types need optimization
 
-📋 **Summary Statistics**
+**Summary Statistics**
 - Average Good% for each Core Web Vital
 - Average P75 values
-- Status indicators (✅ Good, ⚠️ Needs Work, ❌ Poor)
+- Status indicators (Good, Needs Work, Poor)
 - Based on thresholds: >75% = Good, >50% = Needs Work, <50% = Poor
 
 ### Manual Charting (Alternative)
 
 You can also create custom charts manually:
 1. Select data in cruxData sheet
-2. Insert → Chart
+2. Insert > Chart
 3. Choose chart type (Recommended: Stacked Bar, Column, Line)
 4. Customize as needed
 
 ## Performance
 
-For 10 URLs × 3 form factors:
+For 10 URLs x 3 form factors:
 
 - 30 API requests
-- ~12 seconds of sleep time (400ms × 30)
+- ~12 seconds of sleep time (400ms x 30)
 - ~15-20 seconds total execution time
 
 This is well within Apps Script's 6-minute execution limit.
@@ -221,7 +219,7 @@ This is well within Apps Script's 6-minute execution limit.
 **Missing data in spreadsheet**
 
 - Check the **executionHistory** sheet to see which requests failed and why
-- Check Apps Script logs (View → Logs) for API errors
+- Check Apps Script logs (View > Logs) for API errors
 - Verify URLs are in the CrUX dataset (not all URLs have data)
 - Check API key permissions and quota
 
@@ -348,11 +346,11 @@ PropertiesService.getScriptProperties().setProperty("CRUX_API_KEY", "new-key");
 
 #### Benefits
 
-✅ API key not visible in code
-✅ Can share script without exposing credentials
-✅ Easy to update without editing code
-✅ Persists across executions
-✅ More secure than hardcoding
+- API key not visible in code
+- Can share script without exposing credentials
+- Easy to update without editing code
+- Persists across executions
+- More secure than hardcoding
 
 **Note:** Script Properties are accessible to anyone who can edit the script. They provide obfuscation but not encryption.
 

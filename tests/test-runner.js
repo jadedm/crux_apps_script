@@ -30,9 +30,9 @@ function runAllTests() {
   Logger.log(`\nPass Rate: ${passPercentage}%`);
 
   if (unitResults.failed === 0 && e2eResults.failed === 0) {
-    Logger.log("\n✓ All tests passed!");
+    Logger.log("\nAll tests passed!");
   } else {
-    Logger.log("\n✗ Some tests failed. Check logs above for details.");
+    Logger.log("\nSome tests failed. Check logs above for details.");
   }
 
   return {
@@ -196,15 +196,15 @@ function generateCoverageReport() {
 
   Logger.log("Methods with test coverage:");
   methods.forEach((method) => {
-    Logger.log(`✓ ${method}`);
+    Logger.log(`${method}`);
   });
 
   Logger.log("\nTest Types:");
-  Logger.log("✓ Unit Tests");
-  Logger.log("✓ Integration Tests");
-  Logger.log("✓ End-to-End Tests");
-  Logger.log("✓ Error Handling Tests");
-  Logger.log("✓ Edge Case Tests");
+  Logger.log("Unit Tests");
+  Logger.log("Integration Tests");
+  Logger.log("End-to-End Tests");
+  Logger.log("Error Handling Tests");
+  Logger.log("Edge Case Tests");
 
   Logger.log("\nCoverage Summary:");
   Logger.log("- Constructor validation: 100%");

@@ -29,7 +29,7 @@ const TestFramework = {
     try {
       fn();
       this.results.passed++;
-      Logger.log(`✓ ${description}`);
+      Logger.log(`PASS: ${description}`);
     } catch (error) {
       this.results.failed++;
       this.results.errors.push({
@@ -37,7 +37,7 @@ const TestFramework = {
         error: error.message,
         stack: error.stack,
       });
-      Logger.log(`✗ ${description}`);
+      Logger.log(`FAIL: ${description}`);
       Logger.log(`  Error: ${error.message}`);
     }
   },
